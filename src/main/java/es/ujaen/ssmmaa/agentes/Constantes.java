@@ -26,6 +26,11 @@ public class Constantes {
         Solomillo_a_la_pimienta(PRINCIPAL, 8.65),
         Tarta_de_queso(POSTRE, 5.19);
 
+        @Override
+        public String toString() {
+            return "Plato{" + "ordenComanda=" + ordenComanda + ", precio=" + precio + '}';
+        }
+
         private OrdenComanda ordenComanda;
         private double precio;
 
