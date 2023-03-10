@@ -45,7 +45,6 @@ public class AgenteCocina extends Agent {
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
         sd.setType("cocina");
-        sd.setName("cocina");
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);

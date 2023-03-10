@@ -8,6 +8,7 @@ package es.ujaen.ssmmaa.agentes;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.ENTRANTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.POSTRE;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.PRINCIPAL;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -20,11 +21,11 @@ public class Constantes {
         ENTRANTE, PRINCIPAL, POSTRE;
     }
 
-    public enum NombreServicio {
-        RESTAURANTE, COCINA, CLIENTE
-    }
-
-    public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
+//    public enum NombreServicio {
+//        RESTAURANTE, COCINA, CLIENTE
+//    }
+//
+//    public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
 
     public enum Plato {
         Aceitunas(ENTRANTE, 2.50),
@@ -56,42 +57,38 @@ public class Constantes {
 
     }
 
-    public class Mesa {
+    
 
-        private int capacidadMaxima;
-        private ArrayList<String> comanda;
-        private boolean disponible;
+    //Serualizable para enviar la clase mediante cadena de bytes de forma eficiente
+    public class Comanda implements Serializable {
 
-        public Mesa(int capacidadMaxima) {
-            this.capacidadMaxima = capacidadMaxima;
-            this.comanda = new ArrayList<>();
-            this.disponible = true;
+        private static final long serialVersionUID = 1L;
+        private int numMesa;
+        private ArrayList<Plato> platos;
+
+        public Comanda(int numMesa) {
+            this.numMesa = numMesa;
+            this.platos = new ArrayList<>();
         }
 
-        public synchronized boolean agregarComanda(String plato) {
-            if (this.comanda.size() < this.capacidadMaxima) {
-                this.comanda.add(plato);
-                return true;
-            } else {
-                return false;
+        public int getNumMesa() {
+            return numMesa;
+        }
+
+        public void addPlato(Plato plato) {
+            platos.add(plato);
+        }
+
+        public ArrayList<Plato> getPlatos() {
+            return platos;
+        }
+
+        public double calcularTotal() {
+            double total = 0;
+            for (Plato plato : platos) {
+                total += plato.getPrecio();
             }
-        }
-
-        public synchronized void reset() {
-            this.comanda.clear();
-            this.disponible = true;
-        }
-
-        public synchronized ArrayList<String> getComanda() {
-            return comanda;
-        }
-
-        public synchronized boolean isDisponible() {
-            return disponible;
-        }
-
-        public synchronized void setDisponible(boolean disponible) {
-            this.disponible = disponible;
+            return total;
         }
     }
 }
