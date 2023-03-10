@@ -33,12 +33,13 @@ public class AgenteRestaurante extends Agent {
     // Variables del agente
     //private AgenteRestauranteJFrame myGui;
     // Capacidad máxima de comandas que podemos recibir simultáneamente
-    private int serviciosAPreparar;
-
-    // Número de comandas que se están preparando en este momento
-    private int comandasPreparando;
-    private int usuariosEnRestaurante;
-    private int capacidadMaximaClientes;
+    private int capacidad;
+    private int numServicios;
+    private int numServiciosActuales = 0;
+    
+    private List<Mesa> mesas = new ArrayList<>();
+    private List<Comanda> comandasPendientes = new ArrayList<>();
+    private List<Comanda> comandasEnProceso = new ArrayList<>();
 
     /**
      * Se ejecuta cuando se inicia el agente
