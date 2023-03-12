@@ -1,3 +1,6 @@
 ClientePaco:es.ujaen.ssmmaa.agentes.AgenteCliente
+Aceitunas:Solomillo_a_la_pimienta
 CocinaYantarGood:es.ujaen.ssmmaa.agentes.AgenteCocina
+4
 RestauranteMega:es.ujaen.ssmmaa.agentes.AgenteRestaurante
+10:15

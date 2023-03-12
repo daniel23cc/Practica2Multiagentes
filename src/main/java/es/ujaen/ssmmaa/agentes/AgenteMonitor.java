@@ -35,7 +35,7 @@ public class AgenteMonitor extends Agent {
     private String nombreFichero;
     private ArrayList<String> arrayNombreAgentes;
     private ArrayList<String> arrayClaseAgentes;
-    private ArrayList<String> arrayArgumentos;
+    private ArrayList<ArrayList<String>> arrayArgumentos;
     private AgenteMonitorJFrame myGui2;
 
     private String nombreAgente;
@@ -122,17 +122,28 @@ public class AgenteMonitor extends Agent {
 
         @Override
         public void action() {
-            Object[] arrAux = new Object[2];
-            arrAux[0] = "1";
-            arrAux[1]="4";
+
+            Object[] arrAux;
+
             try {
                 myGui2.presentarSalida("\nCreando agente Restaurante...");
-                System.out.println("ARGS: "+arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux[0]);
+
+                arrAux = new Object[arrayArgumentos.get(2).size()];
+                for (int i = 0; i < arrayArgumentos.get(2).size(); i++) {
+                    arrAux[i] = arrayArgumentos.get(2).get(i);
+                }
+
+                System.out.println("ARGS: " + arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(2), arrayClaseAgentes.get(2), arrAux);
-                
+
+                arrAux = new Object[arrayArgumentos.get(0).size()];
+                for (int i = 0; i < arrayArgumentos.get(0).size(); i++) {
+                    arrAux[i] = arrayArgumentos.get(0).get(i);
+                }
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
+
             } catch (Exception ex) {
                 Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -160,37 +171,50 @@ public class AgenteMonitor extends Agent {
         if (args != null && args.length > 0) {
             // Lee el fichero de configuración
             nombreFichero = (String) args[0];
-            //System.out.println("****LEYENDO ARCHIVO: " + nombreFichero + " ****");
+
             myGui2.presentarSalida("****LEYENDO ARCHIVO: " + nombreFichero + " **** \n");
+
             try (BufferedReader reader = new BufferedReader(new FileReader(nombreFichero))) {
                 String linea = null;
 
                 arrayNombreAgentes = new ArrayList<>();
                 arrayClaseAgentes = new ArrayList<>();
-                arrayArgumentos = new ArrayList<>();
+                arrayArgumentos = new ArrayList<ArrayList<String>>();
+                for (int i = 0; i < 3; i++) {
+                    arrayArgumentos.add(new ArrayList<>());
+                }
 
                 while ((linea = reader.readLine()) != null) {
                     String[] argumentos = linea.split(":");
                     nombreAgente = argumentos[0];
                     claseAgente = argumentos[1];
 
-//                    if ((linea = reader.readLine()) != null) {
-//                        argumentos = linea.split(":");
-//                        arrayArgumentos.add(argumentos[0]);
-//                        arrayArgumentos.add(argumentos[1].split(":")[0]);
-//                        arrayArgumentos.add(argumentos[1].split(":")[1]);
-//                    }
+                    if ((linea = reader.readLine()) != null) {
+                        if (claseAgente.contains("Cliente")) {
+                            argumentos = linea.split(":");
+                            for (int i = 0; i < argumentos.length; i++) {
+                                arrayArgumentos.get(0).add(argumentos[i]);
+                            }
+                        } else if (claseAgente.contains("Restaurante")) {
+                            argumentos = linea.split(":");
+                            for (int i = 0; i < argumentos.length; i++) {
+                                arrayArgumentos.get(2).add(argumentos[i]);
+                            }
+                        } else {
+                            arrayArgumentos.get(1).add(linea);
+                        }
+                    }
                     arrayNombreAgentes.add(nombreAgente);
                     //System.out.println("Nombre: " + nombreAgente);
                     arrayClaseAgentes.add(claseAgente);
                 }
 
-                myGui2.presentarSalida("Agentes que se van a crear: ");
+                myGui2.presentarSalida("Agentes que se van a crear: \n");
                 for (int i = 0; i < arrayNombreAgentes.size(); i++) {
                     myGui2.presentarSalida(arrayNombreAgentes.get(i) + "\n ");
                 }
 
-                myGui2.presentarSalida("\nArgumentos: ");
+                myGui2.presentarSalida("\nArgumentos: \n");
                 for (int i = 0; i < arrayArgumentos.size(); i++) {
                     myGui2.presentarSalida(arrayArgumentos.get(i) + ", ");
                     if (i > 0 && i % 3 == 0) {
