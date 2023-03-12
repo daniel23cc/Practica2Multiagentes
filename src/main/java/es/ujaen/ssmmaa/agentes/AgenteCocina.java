@@ -5,6 +5,8 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
+import es.ujaen.ssmmaa.gui.AgenteCocinaJFrame;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -27,27 +29,32 @@ public class AgenteCocina extends Agent {
 
     // Contador de platos preparados
     private int platosPreparados;
+    private AgenteCocinaJFrame myGui;
 
     @Override
     protected void setup() {
-
+        myGui = new AgenteCocinaJFrame(this);
+        myGui.setVisible(true);
+        myGui.presentarSalida("Se inicializa la ejecución de " + this.getName() + "\n");
         //obtengo el argumento
         Object[] args = getArguments();
 
         if (args != null && args.length > 0) {
             String argumento = (String) args[0];
             capacidadPlatos = Integer.parseInt(argumento);
+            myGui.presentarSalida("Capacidad " + capacidadPlatos + "\n");
         }
+        
+        
         // Inicializamos el contador de platos preparados
         platosPreparados = 0;
         //inicializacion agente cocina
-        DFAgentDescription dfd = new DFAgentDescription();
-        dfd.setName(getAID());
-        ServiceDescription sd = new ServiceDescription();
-        sd.setType("cocina");
-        dfd.addServices(sd);
+        DFAgentDescription template = new DFAgentDescription();
+        ServiceDescription templateSd = new ServiceDescription();
+        templateSd.setType(TIPO_SERVICIO);
+        template.addServices(templateSd);
         try {
-            DFService.register(this, dfd);
+            DFService.register(this, template);
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
@@ -179,7 +186,7 @@ public class AgenteCocina extends Agent {
                     send(respuesta);
                 }
             } else {
-            // Si no hemos recibido ningún mensaje, bloqueamos el comportamiento hasta que llegue uno nuevo
+                // Si no hemos recibido ningún mensaje, bloqueamos el comportamiento hasta que llegue uno nuevo
                 block();
             }
         }

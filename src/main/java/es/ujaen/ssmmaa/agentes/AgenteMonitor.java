@@ -143,6 +143,14 @@ public class AgenteMonitor extends Agent {
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
+                
+                arrAux = new Object[arrayArgumentos.get(1).size()];
+                for (int i = 0; i < arrayArgumentos.get(1).size(); i++) {
+                    arrAux[i] = arrayArgumentos.get(1).get(i);
+                }
+                myGui2.presentarSalida("\nCreando agente Cocina...");
+                //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
+                MicroRuntime.startAgent(arrayNombreAgentes.get(1), arrayClaseAgentes.get(1), arrAux);
 
             } catch (Exception ex) {
                 Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);

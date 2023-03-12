@@ -58,11 +58,11 @@ public class AgenteCliente extends Agent {
         mensajesPendientes = new ArrayList<>();
         //servicios = new ArrayList<>();
         //obtengo el argumento
-        //Object[] args = getArguments();
-//        if (args != null && args.length > 0) {
-//            servicios = (ArrayList<Constantes.Plato>) args[0];
-//            System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
-//        }
+        Object[] args = getArguments();
+        if (args != null && args.length > 0) {
+            servicios = (ArrayList<Constantes.Plato>) args[0];
+            System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
+        }
         //Busco agentes restaurante
         // Se añaden las tareas principales
         DFAgentDescription template = new DFAgentDescription();
