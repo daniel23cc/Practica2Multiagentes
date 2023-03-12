@@ -1,3 +1,3 @@
-ClientePaco:es.ujaen.ssmma.agentes.AgenteCliente
-CocinaYantarGood:es.ujaen.ssmma.agentes.AgenteCocina
-RestauranteMega:es.ujaen.ssmma.agentes.AgenteRestaurante
+ClientePaco:es.ujaen.ssmmaa.agentes.AgenteCliente
+CocinaYantarGood:es.ujaen.ssmmaa.agentes.AgenteCocina
+RestauranteMega:es.ujaen.ssmmaa.agentes.AgenteRestaurante

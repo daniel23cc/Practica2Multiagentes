@@ -5,6 +5,8 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.MONITOR;
+import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import es.ujaen.ssmmaa.gui.AgenteMonitorJFrame;
 import jade.core.Agent;
 import jade.core.MicroRuntime;
@@ -63,67 +65,79 @@ public class AgenteMonitor extends Agent {
             System.out.println("Se inicia la ejecucion del agente: " + this.getName());
             //Registro del agente en las Páginas Amarrillas
             leerArchivo();
-            //Registro de la Ontología
-            DFAgentDescription dfd = new DFAgentDescription();
-            dfd.setName(getAID());
-            ServiceDescription sd = new ServiceDescription();
-            sd.setType("Monitor");
-            sd.setName("Monitor");
-            dfd.addServices(sd);
-            try {
-                DFService.register(this, dfd);
-            } catch (FIPAException fe) {
-                fe.printStackTrace();
-            }
+
+            addBehaviour(new TareaCrearAgentes());
 
             // Se añaden las tareas principales
-            addBehaviour(new OneShotBehaviour() {
-                //private int n = 0;
-
-                @Override
-                public void action() {
-                    // Crear el contenedor para los agentes
-                    AgentContainer container = getContainerController();
-
-                    // Crear el agente Cocina
-    
-                    Object[] argumentosCocina = new Object[1];
-                    argumentosCocina[0] = arrayArgumentos.get(0);
-                    myGui2.presentarSalida("\nCreando agente Cocina...");
-
-                    try {
-                        System.out.println(arrayNombreAgentes.get(0) + "; " + arrayClaseAgentes.get(0) + " " + argumentosCocina[0]);
-                        MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), argumentosCocina);
-                    } catch (Exception ex) {
-                        Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-
-                    // Crear el agente Restaurante
-                    Object[] argumentosRestaurante = new Object[2];
-                    argumentosRestaurante[0] = arrayArgumentos.get(0);
-                    myGui2.presentarSalida("\nCreando agente Restaurante...");
-                    try {
-                        System.out.println(arrayNombreAgentes.get(1) + "; " + arrayClaseAgentes.get(1) + " " + argumentosRestaurante[0]);
-                        MicroRuntime.startAgent(arrayNombreAgentes.get(1), arrayClaseAgentes.get(1), argumentosRestaurante);
-                    } catch (Exception ex) {
-                        Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-
-                    // Crear el agente Cliente
-                    Object[] clienteArgs = new Object[1];
-                    clienteArgs[0] = serviciosCliente;
-                    try {
-                        AgentController clienteController = container.createNewAgent("cliente", "AgenteCliente", clienteArgs);
-                        clienteController.start();
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+//            addBehaviour(new OneShotBehaviour() {
+//                //private int n = 0;
+//
+//                @Override
+//                public void action() {
+//                    // Crear el contenedor para los agentes
+//                    AgentContainer container = getContainerController();
+//
+//                    // Crear el agente Cocina
+//    
+//                    Object[] argumentosCocina = new Object[1];
+//                    argumentosCocina[0] = arrayArgumentos.get(0);
+//                    myGui2.presentarSalida("\nCreando agente Cocina...");
+//
+//                    try {
+//                        System.out.println(arrayNombreAgentes.get(0) + "; " + arrayClaseAgentes.get(0) + " " + argumentosCocina[0]);
+//                        MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), argumentosCocina);
+//                    } catch (Exception ex) {
+//                        Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//
+//                    // Crear el agente Restaurante
+//                    Object[] argumentosRestaurante = new Object[2];
+//                    argumentosRestaurante[0] = arrayArgumentos.get(0);
+//                    myGui2.presentarSalida("\nCreando agente Restaurante...");
+//                    try {
+//                        System.out.println(arrayNombreAgentes.get(1) + "; " + arrayClaseAgentes.get(1) + " " + argumentosRestaurante[0]);
+//                        MicroRuntime.startAgent(arrayNombreAgentes.get(1), arrayClaseAgentes.get(1), argumentosRestaurante);
+//                    } catch (Exception ex) {
+//                        Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//
+//                    // Crear el agente Cliente
+//                    Object[] clienteArgs = new Object[1];
+//                    clienteArgs[0] = serviciosCliente;
+//                    try {
+//                        AgentController clienteController = container.createNewAgent("cliente", "AgenteCliente", clienteArgs);
+//                        clienteController.start();
+//                    } catch (StaleProxyException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
         } catch (Exception ex) {
             Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
         }
         //Añadir las tareas principales
+    }
+
+    public class TareaCrearAgentes extends OneShotBehaviour {
+
+        @Override
+        public void action() {
+            Object[] arrAux = new Object[2];
+            arrAux[0] = "1";
+            arrAux[1]="4";
+            try {
+                myGui2.presentarSalida("\nCreando agente Restaurante...");
+                System.out.println("ARGS: "+arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux[0]);
+                MicroRuntime.startAgent(arrayNombreAgentes.get(2), arrayClaseAgentes.get(2), arrAux);
+                
+                myGui2.presentarSalida("\nCreando agente Cliente...");
+                //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
+                MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
+            } catch (Exception ex) {
+                Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
     }
 
     @Override
@@ -141,20 +155,6 @@ public class AgenteMonitor extends Agent {
         MicroRuntime.stopJADE();
     }
 
-//    //Métodos de trabajo del agente
-//    private void leerArchivo() throws Exception {
-//        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
-//
-//            // Leer los parámetros de cada agente desde el archivo de configuración
-//            //capacidadCocina = Integer.parseInt(br.readLine().split("=")[1]);
-//            cantidadPlatosCocina = Integer.parseInt(br.readLine().split("=")[1]);
-//            capacidadRestaurante = Integer.parseInt(br.readLine().split("=")[1]);
-//            cantidadServiciosRestaurante = Integer.parseInt(br.readLine().split("=")[1]);
-//            serviciosCliente = br.readLine().split("=")[1].split(",");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
     private void leerArchivo() throws Exception {
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
@@ -164,7 +164,6 @@ public class AgenteMonitor extends Agent {
             myGui2.presentarSalida("****LEYENDO ARCHIVO: " + nombreFichero + " **** \n");
             try (BufferedReader reader = new BufferedReader(new FileReader(nombreFichero))) {
                 String linea = null;
-                tiempoCreacionAgentes = Integer.parseInt(linea);
 
                 arrayNombreAgentes = new ArrayList<>();
                 arrayClaseAgentes = new ArrayList<>();
@@ -175,28 +174,23 @@ public class AgenteMonitor extends Agent {
                     nombreAgente = argumentos[0];
                     claseAgente = argumentos[1];
 
-                    if ((linea = reader.readLine()) != null) {
-                        argumentos = linea.split(":");
-                        arrayArgumentos.add(argumentos[0]);
-                        arrayArgumentos.add(argumentos[1].split(":")[0]);
-                        arrayArgumentos.add(argumentos[1].split(":")[1]);
-                    }
+//                    if ((linea = reader.readLine()) != null) {
+//                        argumentos = linea.split(":");
+//                        arrayArgumentos.add(argumentos[0]);
+//                        arrayArgumentos.add(argumentos[1].split(":")[0]);
+//                        arrayArgumentos.add(argumentos[1].split(":")[1]);
+//                    }
                     arrayNombreAgentes.add(nombreAgente);
                     //System.out.println("Nombre: " + nombreAgente);
                     arrayClaseAgentes.add(claseAgente);
-                    //System.out.println("Clase: " + claseAgente);
-                    //arrayArgumentos.add(cantidadPlatosCocina);
-                    //arrayArgumentos.add(capacidadRestaurante);
-                    //arrayArgumentos.add(cantidadServiciosRestaurante);
-                    //System.out.println("Ejecuciones: " + numEjecuciones);
                 }
 
                 myGui2.presentarSalida("Agentes que se van a crear: ");
                 for (int i = 0; i < arrayNombreAgentes.size(); i++) {
-                    myGui2.presentarSalida(arrayNombreAgentes.get(i) + ", ");
+                    myGui2.presentarSalida(arrayNombreAgentes.get(i) + "\n ");
                 }
 
-                myGui2.presentarSalida("\nArgumentod: ");
+                myGui2.presentarSalida("\nArgumentos: ");
                 for (int i = 0; i < arrayArgumentos.size(); i++) {
                     myGui2.presentarSalida(arrayArgumentos.get(i) + ", ");
                     if (i > 0 && i % 3 == 0) {

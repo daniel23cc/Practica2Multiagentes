@@ -10,6 +10,7 @@ import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.POSTRE;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.PRINCIPAL;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  *
@@ -21,11 +22,15 @@ public class Constantes {
         ENTRANTE, PRINCIPAL, POSTRE;
     }
 
-//    public enum NombreServicio {
-//        RESTAURANTE, COCINA, CLIENTE
-//    }
-//
-//    public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
+    public Random aleatorio = new Random();
+
+    public static final String TIPO_SERVICIO = "SERVICIO"; //padre
+
+    public enum NombreServicio { //hijo
+        CLIENTE, RESTAURANTE, COCINA, MONITOR
+    }
+
+    public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
 
     public enum Plato {
         Aceitunas(ENTRANTE, 2.50),
@@ -56,8 +61,6 @@ public class Constantes {
         }
 
     }
-
-    
 
     //Serualizable para enviar la clase mediante cadena de bytes de forma eficiente
     public class Comanda implements Serializable {

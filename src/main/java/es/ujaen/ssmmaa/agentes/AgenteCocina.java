@@ -136,7 +136,7 @@ public class AgenteCocina extends Agent {
 //
 //    }
     //Clases internas que representan las tareas del agente
-    private class Tarea extends Behaviour {
+    public class Tarea extends Behaviour {
 
         public Tarea(AgenteCocina aThis) {
             super(aThis);
@@ -182,6 +182,11 @@ public class AgenteCocina extends Agent {
             // Si no hemos recibido ningún mensaje, bloqueamos el comportamiento hasta que llegue uno nuevo
                 block();
             }
+        }
+
+        @Override
+        public boolean done() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
 }
