@@ -71,7 +71,7 @@ public class AgenteCliente extends Agent {
         template.addServices(templateSd);
 
         addBehaviour(new TareaSuscripcionDF(this, template));
-        addBehaviour(new TareaEnvio());
+        addBehaviour(new TareaEnvio(this,3000));
         //addBehaviour(new TareaMostrar(this, 10000));
 
     }
@@ -144,33 +144,37 @@ public class AgenteCliente extends Agent {
         }
     }
 
-    public class TareaEnvio extends OneShotBehaviour {
+    public class TareaEnvio extends TickerBehaviour {
+
+        public TareaEnvio(Agent a, long period) {
+            super(a, period);
+        }
 
         @Override
-        public void action() {
+        public void onTick() {
             //Se envía la operación a todos los agentes restaurante
-            
-            ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
-            mensaje.setSender(myAgent.getAID());
-            //Se añaden todos los agentes operación
-            int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
-            myGui.presentarSalida("--->  Agentes restaurantee ncontrados:"+numAgentes+"\n");
-            for (int i = 0; i < numAgentes; i++) {
-                mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(i));
-            }
-            mensaje.setContent("Primer mensaje de prueba");
-            myGui.presentarSalida("--->  ENVIANDO: "+mensaje.getContent()+"\n");
-            send(mensaje);
+            if (listaAgentes[RESTAURANTE.ordinal()].size() > 0) {
+                ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
+                mensaje.setSender(myAgent.getAID());
+                //Se añaden todos los agentes operación
+                int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
+                myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
+                for (int i = 0; i < numAgentes; i++) {
+                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(i));
+                }
+                mensaje.setContent("Primer mensaje de prueba");
+                myGui.presentarSalida("--->  ENVIANDO: " + mensaje.getContent() + "\n");
+                System.out.println("--->  ENVIANDO: " + mensaje.getContent() + "\n");
+                send(mensaje);
 
-            //Se añade el mensaje para la consola
-            mensajesPendientes.add("Enviado a: " + numAgentes
-                    + " agentes el mensaje: " + mensaje.getContent());
+                //Se añade el mensaje para la consola
+                mensajesPendientes.add("Enviado a: " + numAgentes
+                        + " agentes el mensaje: " + mensaje.getContent());
+            }
 
         }
 
     }
-
-    
 
     //addBehaviour(new TareaSuscripcionDF(this, template));
 //        addBehaviour(new CyclicBehaviour(this) {

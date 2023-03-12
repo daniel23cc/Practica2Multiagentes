@@ -146,11 +146,15 @@ public class AgenteRestaurante extends Agent {
             ACLMessage mensaje = myAgent.receive(plantilla);
             if (mensaje != null) {
                 //procesamos el mensaje
-                String[] contenido = mensaje.getContent().split(" ");
+                String[] contenido = mensaje.getContent().split(",");
 
                 try {
-                    System.out.println("Contenido es: " + contenido);
-                    myGui.presentarSalida("Contenido es: " + contenido);
+                    System.out.println("Contenido:");
+                    myGui.presentarSalida("Contenido:\n");
+                    for (int i = 0; i < contenido.length; i++) {
+                        System.out.println(contenido[i]);
+                        myGui.presentarSalida(contenido[i] + "\n");
+                    }
                 } catch (NumberFormatException ex) {
                     // No sabemos tratar el mensaje y los presentamos por consola
                     System.out.println("El agente: " + myAgent.getName()
