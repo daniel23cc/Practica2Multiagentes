@@ -70,8 +70,8 @@ public class AgenteRestaurante extends Agent {
             argumento = (String) args[1];
             numServicios = Integer.parseInt(argumento);
         } else {
-//            System.out.println("Error: el agente Restaurante necesita argumentos para su funcionamiento");
-//            doDelete();
+            System.out.println("Error: el agente Restaurante necesita argumentos para su funcionamiento");
+            doDelete();
         }
 
         // Inicializamos

@@ -37,7 +37,8 @@ public class Constantes {
         Nachos_especiales(ENTRANTE, 3.99),
         Macarrones_con_tomatico(PRINCIPAL, 5.99),
         Solomillo_a_la_pimienta(PRINCIPAL, 8.65),
-        Tarta_de_queso(POSTRE, 5.19);
+        Tarta_de_queso(POSTRE, 5.19),
+        Helado_frambuesa(POSTRE,1.99);
 
         @Override
         public String toString() {
