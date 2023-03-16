@@ -85,7 +85,7 @@ public class AgenteMonitorJFrame extends javax.swing.JFrame {
     private void botonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonActionPerformed
         // TODO add your handling code here:
         myAgent.doDelete();
-        System.out.println("Finaliza la ejecución de " + this.myAgent.getName() + " quedarse sin agentes por crear");
+        //System.out.println("Finaliza la ejecución de " + this.myAgent.getName() + " quedarse sin agentes por crear");
     }//GEN-LAST:event_botonActionPerformed
 
 

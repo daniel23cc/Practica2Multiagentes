@@ -5,6 +5,7 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import es.ujaen.ssmmaa.gui.AgenteCocinaJFrame;
 import jade.core.AID;
@@ -50,8 +51,10 @@ public class AgenteCocina extends Agent {
         platosPreparados = 0;
         //inicializacion agente cocina
         DFAgentDescription template = new DFAgentDescription();
+        template.setName(getAID());
         ServiceDescription templateSd = new ServiceDescription();
         templateSd.setType(TIPO_SERVICIO);
+        templateSd.setName(COCINA.name());
         template.addServices(templateSd);
         try {
             DFService.register(this, template);
@@ -60,7 +63,7 @@ public class AgenteCocina extends Agent {
         }
 
         // Se añaden las tareas principales
-        addBehaviour(new AgenteCocina.Tarea(this));
+        //addBehaviour(new AgenteCocina.Tarea(this));
     }
 
     @Override
@@ -73,7 +76,7 @@ public class AgenteCocina extends Agent {
         }
 
         //Se liberan los recuros y se despide
-        //myGui.dispose();
+        myGui.dispose();
         System.out.println("Finaliza la ejecución de " + this.getName());
     }
 

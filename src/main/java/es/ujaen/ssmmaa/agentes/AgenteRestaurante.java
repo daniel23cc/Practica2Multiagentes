@@ -8,6 +8,7 @@ package es.ujaen.ssmmaa.agentes;
 import clasesAux.Mesa;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import es.ujaen.ssmmaa.agentes.Constantes.Comanda;
+import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
 import es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
@@ -45,7 +46,7 @@ public class AgenteRestaurante extends Agent {
     private int capacidad;
     private int numServicios;
     private int numServiciosActuales = 0;
-
+    private AID agenteDF;
     private List<Mesa> mesas = new ArrayList<>();
     private List<Comanda> comandasPendientes = new ArrayList<>();
     private List<Comanda> comandasEnProceso = new ArrayList<>();
@@ -56,10 +57,7 @@ public class AgenteRestaurante extends Agent {
     @Override
     protected void setup() {
         //Configuración del GUI y presentación
-        System.getProperty("java.classpath");
-        myGui = new AgenteRestauranteJFrame(this);
-        myGui.setVisible(true);
-        myGui.presentarSalida("Se inicializa la ejecución de " + this.getName() + "\n");
+        // System.getProperty("java.classpath");
 
         //obtengo el argumento
         Object[] args = getArguments();
@@ -73,6 +71,11 @@ public class AgenteRestaurante extends Agent {
             System.out.println("Error: el agente Restaurante necesita argumentos para su funcionamiento");
             doDelete();
         }
+
+        agenteDF = new AID("df", AID.ISLOCALNAME); //evitar recibir mensajes de DF
+        myGui = new AgenteRestauranteJFrame(this);
+        myGui.setVisible(true);
+        myGui.presentarSalida("Se inicializa la ejecución de " + this.getName() + "\n");
 
         // Inicializamos
         //registro del agente en las paginas amarillas
@@ -132,7 +135,7 @@ public class AgenteRestaurante extends Agent {
         }
 
         //Se liberan los recuros y se despide
-        //myGui.dispose();
+        myGui.dispose();
         System.out.println("Finaliza la ejecución de " + this.getName());
 
     }
@@ -142,7 +145,8 @@ public class AgenteRestaurante extends Agent {
         @Override
         public void action() {
             //Recepción de la información para realizar la operación
-            MessageTemplate plantilla = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+            MessageTemplate plantilla = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
             ACLMessage mensaje = myAgent.receive(plantilla);
             if (mensaje != null) {
                 //procesamos el mensaje

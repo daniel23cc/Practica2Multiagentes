@@ -66,6 +66,17 @@ public class AgenteMonitor extends Agent {
             //Registro del agente en las Páginas Amarrillas
             leerArchivo();
 
+            DFAgentDescription template = new DFAgentDescription();
+            template.setName(getAID());
+            ServiceDescription templateSd = new ServiceDescription();
+            templateSd.setType(TIPO_SERVICIO);
+            templateSd.setName(MONITOR.name());
+            template.addServices(templateSd);
+            try {
+                DFService.register(this, template);
+            } catch (FIPAException fe) {
+                fe.printStackTrace();
+            }
             addBehaviour(new TareaCrearAgentes());
 
             // Se añaden las tareas principales
@@ -126,13 +137,12 @@ public class AgenteMonitor extends Agent {
             Object[] arrAux;
 
             try {
-                myGui2.presentarSalida("\nCreando agente Restaurante...");
 
                 arrAux = new Object[arrayArgumentos.get(2).size()];
                 for (int i = 0; i < arrayArgumentos.get(2).size(); i++) {
                     arrAux[i] = arrayArgumentos.get(2).get(i);
                 }
-
+                myGui2.presentarSalida("\nCreando agente Restaurante...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(2), arrayClaseAgentes.get(2), arrAux);
 
@@ -141,15 +151,15 @@ public class AgenteMonitor extends Agent {
                     arrAux[i] = arrayArgumentos.get(0).get(i);
                 }
                 myGui2.presentarSalida("\nCreando agente Cliente...");
-                //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
+                System.out.println("ARGS: " + arrayNombreAgentes.get(0) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
-                
+
                 arrAux = new Object[arrayArgumentos.get(1).size()];
                 for (int i = 0; i < arrayArgumentos.get(1).size(); i++) {
                     arrAux[i] = arrayArgumentos.get(1).get(i);
                 }
                 myGui2.presentarSalida("\nCreando agente Cocina...");
-                //System.out.println(arrayNombreAgentes.get(n) + "; " + arrayClaseAgentes.get(n) + " " + arrAux[0]);
+                System.out.println("ARGS: " + arrayNombreAgentes.get(1) + "; " + arrayClaseAgentes.get(1) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(1), arrayClaseAgentes.get(1), arrAux);
 
             } catch (Exception ex) {
