@@ -237,6 +237,7 @@ public class AgenteRestaurante extends Agent {
                         respuestaEntrada.addReceiver(cliente);
                         respuestaEntrada.setContent("OK");
                         send(respuestaEntrada);
+                        numComensales++;
                         addBehaviour(new TareaRecepcion());
                     }// si no hay capacidad, responder que no se puede entrar
                     else {
@@ -256,34 +257,37 @@ public class AgenteRestaurante extends Agent {
 
         @Override
         public void action() {
-            //Recepción de la información para realizar la operación
-            MessageTemplate plantilla = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
-            ACLMessage mensaje = myAgent.receive(plantilla);
-            if (mensaje != null) {
-                //procesamos el mensaje
-                String[] contenido = mensaje.getContent().split(",");
+            if (numServicios < capacidadServicios) {
+                //Recepción de los platos del cliente
+                MessageTemplate plantilla = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+                ACLMessage mensaje = myAgent.receive(plantilla);
+                if (mensaje != null) {
+                    //procesamos el mensaje
+                    String[] contenido = mensaje.getContent().split(",");
 
-                try {
-                    myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
-                    //guardo el plato para proceder a solicitarlo mas tarde
-                    int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
-                    platosPedidos.add(PLATOS[posplatoAPedir]);
-                } catch (NumberFormatException ex) {
-                    // No sabemos tratar el mensaje y los presentamos por consola
-                    System.out.println("El agente: " + myAgent.getName()
-                            + " no entiende el contenido del mensaje: \n\t"
-                            + mensaje.getContent() + " enviado por: \n\t"
-                            + mensaje.getSender());
-                    myGui.presentarSalida("El agente: " + myAgent.getName()
-                            + " no entiende el contenido del mensaje:"
-                            + mensaje.getContent() + " enviado por:"
-                            + mensaje.getSender());
+                    try {
+                        myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
+                        //guardo el plato para proceder a solicitarlo mas tarde
+                        int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
+                        platosPedidos.add(PLATOS[posplatoAPedir]);
+                    } catch (NumberFormatException ex) {
+                        // No sabemos tratar el mensaje y los presentamos por consola
+                        System.out.println("El agente: " + myAgent.getName()
+                                + " no entiende el contenido del mensaje: \n\t"
+                                + mensaje.getContent() + " enviado por: \n\t"
+                                + mensaje.getSender());
+                        myGui.presentarSalida("El agente: " + myAgent.getName()
+                                + " no entiende el contenido del mensaje:"
+                                + mensaje.getContent() + " enviado por:"
+                                + mensaje.getSender());
+                    }
+                } else {
+                    block();
                 }
-            } else {
-                block();
+            }else {
+                myAgent.doDelete();
             }
-
         }
     }
 
@@ -312,7 +316,7 @@ public class AgenteRestaurante extends Agent {
                 //solicito entrar
                 mensaje.setContent(platosPedidos.remove(0).toString());
 
-                myGui.presentarSalida("---> ENVIANDO a la cocina nº:"+contCocinas+": "+mensaje.getContent());
+                myGui.presentarSalida("---> ENVIANDO a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
 
                 send(mensaje);
             }
@@ -337,12 +341,12 @@ public class AgenteRestaurante extends Agent {
 
             if (mensaje != null) {
                 String[] contenido = mensaje.getContent().split(",");
-  
+
                 if (contenido[0].equals("ENVIADO")) {
-                    myGui.presentarSalida("Restaurante ha recibido cocinado el plato: " + contenido[1]);
+                    myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
                     platosCocinados.add(Plato.valueOf(contenido[1]));
                 } else {
-                    myGui.presentarSalida("Restaurante NO ha recibido cocinado el plato:");
+                    myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: "+contenido[1]);
                 }
             }
 
@@ -367,11 +371,13 @@ public class AgenteRestaurante extends Agent {
                 mensaje.addReceiver(cliente);
 
                 //envio el plato
-                Plato platoAentregar=platosCocinados.remove(0);
+                Plato platoAentregar = platosCocinados.remove(0);
                 mensaje.setContent(platoAentregar.toString());
 
-                myGui.presentarSalida("--->  ENVIANDO al cliente: " + cliente+" plato: "+platoAentregar.toString());
+                myGui.presentarSalida("--->  ENVIANDO al cliente: " + cliente + " plato: " + platoAentregar.toString());
                 send(mensaje);
+                
+                numServicios++;
             }
         }
 

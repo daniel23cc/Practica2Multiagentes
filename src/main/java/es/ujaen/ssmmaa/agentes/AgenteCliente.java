@@ -29,6 +29,8 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.MessageTemplate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -39,7 +41,6 @@ public class AgenteCliente extends Agent {
 
     private ArrayList<String> servicios;
     private static boolean heEntrado;
-    private static int posicionCliente;
     private AgenteClienteJFrame myGui;
     private AID agenteRestaurante;
     private ArrayList<AID>[] listaAgentes;
@@ -63,7 +64,7 @@ public class AgenteCliente extends Agent {
         //Incialización de variables
         servicios = new ArrayList<>();
         heEntrado = false;
-        posicionCliente = -1;
+  
         //obtengo el argumento
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
@@ -178,7 +179,7 @@ public class AgenteCliente extends Agent {
                     mensaje.setSender(myAgent.getAID());
                     //Se añaden todos los agentes operación
                     int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
-                    myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
+                    myGui.presentarSalida("Agentes restaurante encontrados:" + numAgentes + "\n");
                     if (listaAgentes[RESTAURANTE.ordinal()].size() < cont) {
                         cont = 0;
                     }
@@ -216,18 +217,13 @@ public class AgenteCliente extends Agent {
                     if (contenido[0].equals("OK")) {
                         myGui.presentarSalida("He entrado al restaurante");
                         heEntrado = true;
+                        agenteRestaurante=mensaje.getSender();
 
                     } else {
                         myGui.presentarSalida("NO he entrado al restaurante");
                         cont++;
                     }
                 }
-                //mensaje.setContent();
-
-                //pido un plato al restaurante
-                //mensaje.setContent(pedirPlato().name());
-                //compruebo respuesta
-                //addBehaviour(new TareaPedirPlatos(myAgent));
             }
         }
 
@@ -251,13 +247,9 @@ public class AgenteCliente extends Agent {
                     ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
                     //digo quien lo envia
                     mensaje.setSender(myAgent.getAID());
-                    //Se añaden todos los agentes restaurante
-                    int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
-                    myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
-                    if (listaAgentes[RESTAURANTE.ordinal()].size() < cont) {
-                        cont = 0;
-                    }
-                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(cont));
+                    //Se añade el agenteRestaurante al cual entro el cliente
+
+                    mensaje.addReceiver(agenteRestaurante);
 
                     //solicito el plato
                     mensaje.setContent(platoPedido);
@@ -266,6 +258,13 @@ public class AgenteCliente extends Agent {
                     send(mensaje);
                 } else {
                     //borrar el cliente
+                    myGui.presentarSalida("-----AGENTE YA HA ACABADO DE COMER TODOS SUS PLATOS---");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(AgenteCliente.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    myAgent.doDelete();
                 }
             }
 
@@ -288,7 +287,9 @@ public class AgenteCliente extends Agent {
 
                 if (mensaje != null) {
                     String[] contenido = mensaje.getContent().split(",");
+                    myGui.presentarSalida("***************************");
                     myGui.presentarSalida("Comiendo: "+contenido[0]);
+                    myGui.presentarSalida("***************************");
                 }
             }
         }

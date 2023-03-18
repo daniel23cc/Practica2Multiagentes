@@ -191,7 +191,7 @@ public class AgenteCocina extends Agent {
 
             if (mensaje != null) {
                 String[] contenido = mensaje.getContent().split(",");
-                myGui.presentarSalida("Recibido: " + contenido + "\n");
+                myGui.presentarSalida("Recibida una solicitud de cocinar: " + contenido[0] + "\n");
                 //Compruebo de que tipo es el plato(entrante,principal o postre)
                 String tipoComanda = Plato.valueOf("Aceitunas").getOrdenComanda().name();
 
@@ -205,7 +205,7 @@ public class AgenteCocina extends Agent {
 
                     myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
                     }
