@@ -8,9 +8,13 @@ package es.ujaen.ssmmaa.agentes;
 import clasesAux.Mesa;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import es.ujaen.ssmmaa.agentes.Constantes.Comanda;
+import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
+import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
 import es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda;
+import static es.ujaen.ssmmaa.agentes.Constantes.PLATOS;
+import es.ujaen.ssmmaa.agentes.Constantes.Plato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import es.ujaen.ssmmaa.gui.AgenteRestauranteJFrame;
 import jade.core.AID;
@@ -43,13 +47,17 @@ public class AgenteRestaurante extends Agent {
     // Variables del agente
     private AgenteRestauranteJFrame myGui;
     // Capacidad máxima de comandas que podemos recibir simultáneamente
-    private int capacidad;
-    private int numServicios;
-    private int numServiciosActuales = 0;
+    private static int capacidadComensales;
+    private static int numComensales;
+    private static int capacidadServicios;
+    private static int numServicios;
+
+    private ArrayList<AID>[] listaAgentes;
+    private ArrayList<Plato> platosPedidos;
+    private ArrayList<Plato> platosCocinados;
     private AID agenteDF;
-    private List<Mesa> mesas = new ArrayList<>();
-    private List<Comanda> comandasPendientes = new ArrayList<>();
-    private List<Comanda> comandasEnProceso = new ArrayList<>();
+    private AID cliente;
+    private int contCocinas = 0;
 
     /**
      * Se ejecuta cuando se inicia el agente
@@ -59,25 +67,34 @@ public class AgenteRestaurante extends Agent {
         //Configuración del GUI y presentación
         // System.getProperty("java.classpath");
 
+        listaAgentes = new ArrayList[CATEGORIAS.length];
+        agenteDF = new AID("df", AID.ISLOCALNAME); //evitar recibir mensajes de DF
+        for (NombreServicio categoria : CATEGORIAS) {
+            listaAgentes[categoria.ordinal()] = new ArrayList<>();
+        }
+
         //obtengo el argumento
         Object[] args = getArguments();
 
         if (args != null && args.length > 0) {
             String argumento = (String) args[0];
-            capacidad = Integer.parseInt(argumento);
+            capacidadComensales = Integer.parseInt(argumento);
             argumento = (String) args[1];
-            numServicios = Integer.parseInt(argumento);
+            capacidadServicios = Integer.parseInt(argumento);
         } else {
             System.out.println("Error: el agente Restaurante necesita argumentos para su funcionamiento");
             doDelete();
         }
 
-        agenteDF = new AID("df", AID.ISLOCALNAME); //evitar recibir mensajes de DF
         myGui = new AgenteRestauranteJFrame(this);
         myGui.setVisible(true);
         myGui.presentarSalida("Se inicializa la ejecución de " + this.getName() + "\n");
 
         // Inicializamos
+        numComensales = 0;
+        numServicios = 0;
+        platosPedidos = new ArrayList<>();
+        platosCocinados = new ArrayList<>();
         //registro del agente en las paginas amarillas
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -85,13 +102,25 @@ public class AgenteRestaurante extends Agent {
         sd.setType(TIPO_SERVICIO);
         sd.setName(RESTAURANTE.name());
         dfd.addServices(sd);
+
         try {
             DFService.register(this, dfd);
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
 
-        addBehaviour(new TareaRecepcion());
+        //busco agentes cliente y cocina
+        DFAgentDescription template = new DFAgentDescription();
+
+        ServiceDescription templateSd = new ServiceDescription();
+        templateSd.setType(TIPO_SERVICIO);
+        template.addServices(templateSd);
+
+        addBehaviour(new TareaEntradaClientes(this));
+        addBehaviour(new TareaSuscripcionDF(this, template));
+        addBehaviour(new TareaEnvioCocina(this));
+        addBehaviour(new TareaRecibirContestacionCocina(this));
+        addBehaviour(new TareaEnvioCliente(this));
 
         //addBehaviour(new TareaRecepcionOperacion(this, dfd));
 //            try {
@@ -140,6 +169,89 @@ public class AgenteRestaurante extends Agent {
 
     }
 
+    public class TareaSuscripcionDF extends DFSubscriber {
+
+        public TareaSuscripcionDF(Agent a, DFAgentDescription template) {
+            super(a, template);
+        }
+
+        @Override
+        public void onRegister(DFAgentDescription dfad) {
+            Iterator it = dfad.getAllServices();
+            while (it.hasNext()) {
+                ServiceDescription sd = (ServiceDescription) it.next();
+
+                for (NombreServicio nombreServicio : CATEGORIAS) {
+                    if (sd.getName().equals(nombreServicio.name())) {
+                        listaAgentes[nombreServicio.ordinal()].add(dfad.getName());
+                    }
+                }
+            }
+
+            myGui.presentarSalida("El agente: " + myAgent.getName()
+                    + "ha encontrado a:\n\t" + dfad.getName());
+//            System.out.println("El agente: " + myAgent.getName()
+//                    + "ha encontrado a:\n\t" + dfad.getName());
+        }
+
+        @Override
+        public void onDeregister(DFAgentDescription dfad) {
+            AID agente = dfad.getName();
+
+            for (NombreServicio servicio : CATEGORIAS) {
+                if (listaAgentes[servicio.ordinal()].remove(agente)) {
+                    System.out.println("El agente: " + agente.getName()
+                            + " ha sido eliminado de la lista de "
+                            + myAgent.getName());
+                    myGui.presentarSalida("El agente: " + agente.getName()
+                            + " ha sido eliminado de la lista de "
+                            + myAgent.getName());
+                }
+            }
+        }
+    }
+
+    public class TareaEntradaClientes extends CyclicBehaviour {
+
+        public TareaEntradaClientes(Agent a) {
+            super(a);
+        }
+
+        @Override
+        public void action() {
+            if (numServicios < capacidadServicios) {
+                MessageTemplate plantilla = MessageTemplate.and(
+                        MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+
+                ACLMessage mensaje = myAgent.receive(plantilla);
+
+                if (mensaje != null) {
+                    String[] contenido = mensaje.getContent().split(",");
+                    //myGui.presentarSalida("CONTENIDO: " + contenido[1] + "\n");
+                    if (numComensales < capacidadComensales) {
+                        //System.out.println("SE METE");
+                        cliente = mensaje.getSender();
+
+                        ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
+                        respuestaEntrada.addReceiver(cliente);
+                        respuestaEntrada.setContent("OK");
+                        send(respuestaEntrada);
+                        addBehaviour(new TareaRecepcion());
+                    }// si no hay capacidad, responder que no se puede entrar
+                    else {
+                        ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
+                        respuestaEntrada.addReceiver(mensaje.getSender());
+                        respuestaEntrada.setContent("NO");
+                        send(respuestaEntrada);
+                    }
+                }
+            } else {
+                myAgent.doDelete();
+            }
+        }
+    }
+
     public class TareaRecepcion extends CyclicBehaviour {
 
         @Override
@@ -153,12 +265,10 @@ public class AgenteRestaurante extends Agent {
                 String[] contenido = mensaje.getContent().split(",");
 
                 try {
-                    System.out.println("Contenido:");
-                    myGui.presentarSalida("Contenido:\n");
-                    for (int i = 0; i < contenido.length; i++) {
-                        System.out.println(contenido[i]);
-                        myGui.presentarSalida(contenido[i] + "\n");
-                    }
+                    myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
+                    //guardo el plato para proceder a solicitarlo mas tarde
+                    int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
+                    platosPedidos.add(PLATOS[posplatoAPedir]);
                 } catch (NumberFormatException ex) {
                     // No sabemos tratar el mensaje y los presentamos por consola
                     System.out.println("El agente: " + myAgent.getName()
@@ -166,8 +276,8 @@ public class AgenteRestaurante extends Agent {
                             + mensaje.getContent() + " enviado por: \n\t"
                             + mensaje.getSender());
                     myGui.presentarSalida("El agente: " + myAgent.getName()
-                            + " no entiende el contenido del mensaje: \n\t"
-                            + mensaje.getContent() + " enviado por: \n\t"
+                            + " no entiende el contenido del mensaje:"
+                            + mensaje.getContent() + " enviado por:"
                             + mensaje.getSender());
                 }
             } else {
@@ -175,6 +285,96 @@ public class AgenteRestaurante extends Agent {
             }
 
         }
+    }
+
+    public class TareaEnvioCocina extends CyclicBehaviour {
+
+        public TareaEnvioCocina(AgenteRestaurante aThis) {
+            super(aThis);
+        }
+
+        @Override
+        public void action() {
+
+            if (!platosPedidos.isEmpty()) {
+                //creo estructura mensaje
+                ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
+                //digo quien lo envia
+                mensaje.setSender(myAgent.getAID());
+                //Se añaden todos los agentes operación
+                int numAgentes = listaAgentes[COCINA.ordinal()].size();
+                myGui.presentarSalida("Agentes cocina encontrados:" + numAgentes);
+                if (listaAgentes[COCINA.ordinal()].size() < contCocinas) {
+                    contCocinas = 0;
+                }
+                mensaje.addReceiver(listaAgentes[COCINA.ordinal()].get(contCocinas));
+
+                //solicito entrar
+                mensaje.setContent(platosPedidos.remove(0).toString());
+
+                myGui.presentarSalida("---> ENVIANDO a la cocina nº:"+contCocinas+": "+mensaje.getContent());
+
+                send(mensaje);
+            }
+
+        }
+
+    }
+
+    public class TareaRecibirContestacionCocina extends CyclicBehaviour {
+
+        public TareaRecibirContestacionCocina(AgenteRestaurante aThis) {
+            super(aThis);
+        }
+
+        @Override
+        public void action() {
+
+            MessageTemplate plantilla = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
+                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+            ACLMessage mensaje = myAgent.receive(plantilla);
+
+            if (mensaje != null) {
+                String[] contenido = mensaje.getContent().split(",");
+  
+                if (contenido[0].equals("ENVIADO")) {
+                    myGui.presentarSalida("Restaurante ha recibido cocinado el plato: " + contenido[1]);
+                    platosCocinados.add(Plato.valueOf(contenido[1]));
+                } else {
+                    myGui.presentarSalida("Restaurante NO ha recibido cocinado el plato:");
+                }
+            }
+
+        }
+
+    }
+
+    public class TareaEnvioCliente extends CyclicBehaviour {
+
+        public TareaEnvioCliente(AgenteRestaurante aThis) {
+            super(aThis);
+        }
+
+        @Override
+        public void action() {
+            if (!platosCocinados.isEmpty()) {
+                //creo estructura mensaje
+                ACLMessage mensaje = new ACLMessage(ACLMessage.CONFIRM);
+                //digo quien lo envia
+                mensaje.setSender(myAgent.getAID());
+                //Se envia el cliente previo
+                mensaje.addReceiver(cliente);
+
+                //envio el plato
+                Plato platoAentregar=platosCocinados.remove(0);
+                mensaje.setContent(platoAentregar.toString());
+
+                myGui.presentarSalida("--->  ENVIANDO al cliente: " + cliente+" plato: "+platoAentregar.toString());
+                send(mensaje);
+            }
+        }
+
     }
 
 //

@@ -11,9 +11,13 @@ import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
 import jade.core.AID;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
+import static es.ujaen.ssmmaa.agentes.Constantes.Plato.pedirPlato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import es.ujaen.ssmmaa.gui.AgenteClienteJFrame;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFSubscriber;
 import jade.lang.acl.ACLMessage;
@@ -24,6 +28,7 @@ import jade.domain.FIPAException;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.lang.acl.MessageTemplate;
 
 /**
  *
@@ -33,11 +38,14 @@ public class AgenteCliente extends Agent {
     //Variables del agente
 
     private ArrayList<String> servicios;
-
+    private static boolean heEntrado;
+    private static int posicionCliente;
     private AgenteClienteJFrame myGui;
     private AID agenteRestaurante;
     private ArrayList<AID>[] listaAgentes;
     private AID agenteDF;
+
+    private int cont = 0;
 
     @Override
     protected void setup() {
@@ -54,15 +62,30 @@ public class AgenteCliente extends Agent {
 
         //Incialización de variables
         servicios = new ArrayList<>();
+        heEntrado = false;
+        posicionCliente = -1;
         //obtengo el argumento
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            System.out.println("HAY: " + args.length);
+            //System.out.println("HAY: " + args.length);
             for (int i = 0; i < args.length; i++) {
-                servicios.add((String)args[i]);
+                servicios.add((String) args[i]);
             }
             //System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
         }
+        //Registro del agente en las Páginas Amarrillas
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType(TIPO_SERVICIO);
+        sd.setName(CLIENTE.name());
+        dfd.addServices(sd);
+        try {
+            DFService.register(this, dfd);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+
         //Busco agentes restaurante
         // Se añaden las tareas principales
         DFAgentDescription template = new DFAgentDescription();
@@ -72,9 +95,12 @@ public class AgenteCliente extends Agent {
         template.addServices(templateSd);
 
         addBehaviour(new TareaSuscripcionDF(this, template));
-        addBehaviour(new TareaEnvio(this, 3000));
-        //addBehaviour(new TareaMostrar(this, 10000));
+        addBehaviour(new TareaEnvioSolicitudEntradaRestaurante(this, 2000));
+        addBehaviour(new TareaRecibirContestacionRestaurante(this));
+        addBehaviour(new TareaPedirPlatos(this, 12000));
+        addBehaviour(new TareaRecibirPlato(this));
 
+        //addBehaviour(new TareaMostrar(this, 10000));
     }
 
     @Override
@@ -112,8 +138,8 @@ public class AgenteCliente extends Agent {
 
             myGui.presentarSalida("El agente: " + myAgent.getName()
                     + "ha encontrado a:\n\t" + dfad.getName());
-            System.out.println("El agente: " + myAgent.getName()
-                    + "ha encontrado a:\n\t" + dfad.getName());
+//            System.out.println("El agente: " + myAgent.getName()
+//                    + "ha encontrado a:\n\t" + dfad.getName());
         }
 
         @Override
@@ -128,42 +154,147 @@ public class AgenteCliente extends Agent {
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
-                } else {
-                    System.out.println("ERROR********************************");
                 }
             }
         }
     }
 
-    public class TareaEnvio extends TickerBehaviour {
+    public class TareaEnvioSolicitudEntradaRestaurante extends TickerBehaviour {
 
-        public TareaEnvio(Agent a, long period) {
+        public TareaEnvioSolicitudEntradaRestaurante(Agent a, long period) {
             super(a, period);
         }
 
         @Override
         public void onTick() {
+
             //Se envía la operación a todos los agentes restaurante
-            if (listaAgentes[RESTAURANTE.ordinal()].size() > 0) {
-                //creo estructura mensaje
-                ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
-                //digo quien lo envia
-                mensaje.setSender(myAgent.getAID());
-                //Se añaden todos los agentes operación
-                int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
-                myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
-                for (int i = 0; i < numAgentes; i++) {
-                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(i));
+            if (!heEntrado) {
+                if (listaAgentes[RESTAURANTE.ordinal()].size() > 0) {
+
+                    //creo estructura mensaje
+                    ACLMessage mensaje = new ACLMessage(ACLMessage.REQUEST);
+                    //digo quien lo envia
+                    mensaje.setSender(myAgent.getAID());
+                    //Se añaden todos los agentes operación
+                    int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
+                    myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
+                    if (listaAgentes[RESTAURANTE.ordinal()].size() < cont) {
+                        cont = 0;
+                    }
+                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(cont));
+
+                    //solicito entrar
+                    mensaje.setContent("Cliente," + getAID().toString() + ",solicita entrar");
+
+                    myGui.presentarSalida("--->  ENVIANDO: " + mensaje.getContent() + "\n");
+                    send(mensaje);
+
                 }
-                mensaje.setContent("Primer mensaje de prueba");
-                myGui.presentarSalida("--->  ENVIANDO: " + mensaje.getContent() + "\n");
-                send(mensaje);
             }
 
         }
+    }
+
+    public class TareaRecibirContestacionRestaurante extends CyclicBehaviour {
+
+        public TareaRecibirContestacionRestaurante(AgenteCliente aThis) {
+            super(aThis);
+        }
+
+        @Override
+        public void action() {
+            if (!heEntrado) {
+                MessageTemplate plantilla = MessageTemplate.and(
+                        MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+                ACLMessage mensaje = myAgent.receive(plantilla);
+
+                if (mensaje != null) {
+                    String[] contenido = mensaje.getContent().split(",");
+                    //myGui.presentarSalida("CONTENIDO: " + contenido[0] + "\n");
+                    if (contenido[0].equals("OK")) {
+                        myGui.presentarSalida("He entrado al restaurante");
+                        heEntrado = true;
+
+                    } else {
+                        myGui.presentarSalida("NO he entrado al restaurante");
+                        cont++;
+                    }
+                }
+                //mensaje.setContent();
+
+                //pido un plato al restaurante
+                //mensaje.setContent(pedirPlato().name());
+                //compruebo respuesta
+                //addBehaviour(new TareaPedirPlatos(myAgent));
+            }
+        }
 
     }
+
+    public class TareaPedirPlatos extends TickerBehaviour {
+
+        public TareaPedirPlatos(Agent a, long period) {
+            super(a, period);
+        }
+
+        @Override
+        public void onTick() {
+            if (heEntrado) {
+                //Plato platoPedido = Plato.pedirPlato();
+                if (!servicios.isEmpty()) {
+                    String platoPedido = servicios.remove(0);
+                    System.out.println("Cliente: " + getAID() + " pide: " + platoPedido);
+
+                    //creo estructura mensaje
+                    ACLMessage mensaje = new ACLMessage(ACLMessage.INFORM);
+                    //digo quien lo envia
+                    mensaje.setSender(myAgent.getAID());
+                    //Se añaden todos los agentes restaurante
+                    int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
+                    myGui.presentarSalida("--->  Agentes restaurante encontrados:" + numAgentes + "\n");
+                    if (listaAgentes[RESTAURANTE.ordinal()].size() < cont) {
+                        cont = 0;
+                    }
+                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(cont));
+
+                    //solicito el plato
+                    mensaje.setContent(platoPedido);
+
+                    myGui.presentarSalida("Solicitando el plato: " + mensaje.getContent() + "\n");
+                    send(mensaje);
+                } else {
+                    //borrar el cliente
+                }
+            }
+
+        }
+    }
+
+    public class TareaRecibirPlato extends CyclicBehaviour {
+
+        public TareaRecibirPlato(AgenteCliente aThis) {
+            super(aThis);
+        }
+
+        @Override
+        public void action() {
+            if (heEntrado) {
+                MessageTemplate plantilla = MessageTemplate.and(
+                        MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
+                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+                ACLMessage mensaje = myAgent.receive(plantilla);
+
+                if (mensaje != null) {
+                    String[] contenido = mensaje.getContent().split(",");
+                    myGui.presentarSalida("Comiendo: "+contenido[0]);
+                }
+            }
+        }
+    }
 }
+
 //addBehaviour(new TareaSuscripcionDF(this, template));
 //        addBehaviour(new CyclicBehaviour(this) {
 //            @Override

@@ -22,7 +22,7 @@ public class Constantes {
         ENTRANTE, PRINCIPAL, POSTRE;
     }
 
-    public Random aleatorio = new Random();
+    public static Random aleatorio = new Random();
 
     public static final String TIPO_SERVICIO = "SERVICIO"; //padre
 
@@ -38,11 +38,11 @@ public class Constantes {
         Macarrones_con_tomatico(PRINCIPAL, 5.99),
         Solomillo_a_la_pimienta(PRINCIPAL, 8.65),
         Tarta_de_queso(POSTRE, 5.19),
-        Helado_frambuesa(POSTRE,1.99);
+        Helado_frambuesa(POSTRE, 1.99);
 
         @Override
         public String toString() {
-            return "Plato{" + "ordenComanda=" + ordenComanda + ", precio=" + precio + '}';
+            return name() + ","+ ordenComanda +","+ precio;
         }
 
         private OrdenComanda ordenComanda;
@@ -61,7 +61,17 @@ public class Constantes {
             return precio;
         }
 
+        public String getNombre() {
+            return name();
+        }
+
+        public static Plato pedirPlato() {//Obtengo un plato aleatorio
+            int tiradaDado = aleatorio.nextInt(CATEGORIAS.length);
+            return PLATOS[tiradaDado];
+        }
     }
+
+    public static final Plato[] PLATOS = Plato.values();
 
     //Serualizable para enviar la clase mediante cadena de bytes de forma eficiente
     public class Comanda implements Serializable {

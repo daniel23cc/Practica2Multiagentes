@@ -27,7 +27,8 @@ public class AgenteRestauranteJFrame extends javax.swing.JFrame {
     }
 
     public void presentarSalida (String msg) {
-        salidaTexto.append(msg);
+        salidaTexto.append(msg+"\n");
+        System.out.println(msg);
     }
     
     /**
