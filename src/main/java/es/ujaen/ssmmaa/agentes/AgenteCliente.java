@@ -188,7 +188,7 @@ public class AgenteCliente extends Agent {
                     //solicito entrar
                     mensaje.setContent("Cliente," + getAID().toString() + ",solicita entrar");
 
-                    myGui.presentarSalida("--->  ENVIANDO: " + mensaje.getContent() + "\n");
+                    myGui.presentarSalida("--> Solicitud entrar a Restaurante nº: "+cont);
                     send(mensaje);
 
                 }
@@ -215,12 +215,12 @@ public class AgenteCliente extends Agent {
                     String[] contenido = mensaje.getContent().split(",");
                     //myGui.presentarSalida("CONTENIDO: " + contenido[0] + "\n");
                     if (contenido[0].equals("OK")) {
-                        myGui.presentarSalida("He entrado al restaurante");
+                        myGui.presentarSalida("<-- He entrado al restaurante nº: "+cont);
                         heEntrado = true;
                         agenteRestaurante=mensaje.getSender();
 
                     } else {
-                        myGui.presentarSalida("NO he entrado al restaurante");
+                        myGui.presentarSalida("<-- NO He entrado al restaurante nº: "+cont);
                         cont++;
                     }
                 }
@@ -254,11 +254,11 @@ public class AgenteCliente extends Agent {
                     //solicito el plato
                     mensaje.setContent(platoPedido);
 
-                    myGui.presentarSalida("Solicitando el plato: " + mensaje.getContent() + "\n");
+                    myGui.presentarSalida("--> Solicitud del plato: " + mensaje.getContent() + "\n");
                     send(mensaje);
                 } else {
                     //borrar el cliente
-                    myGui.presentarSalida("-----AGENTE YA HA ACABADO DE COMER TODOS SUS PLATOS---");
+                    myGui.presentarSalida("AGENTE YA HA ACABADO DE COMER TODOS SUS PLATOS");
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException ex) {

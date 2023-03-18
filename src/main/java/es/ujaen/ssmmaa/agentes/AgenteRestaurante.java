@@ -239,12 +239,14 @@ public class AgenteRestaurante extends Agent {
                         send(respuestaEntrada);
                         numComensales++;
                         addBehaviour(new TareaRecepcion());
+                        myGui.presentarSalida("--> Aceptacion de entrada al cliente");
                     }// si no hay capacidad, responder que no se puede entrar
                     else {
                         ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
                         respuestaEntrada.addReceiver(mensaje.getSender());
                         respuestaEntrada.setContent("NO");
                         send(respuestaEntrada);
+                        myGui.presentarSalida("--> Rechazo de entrada al cliente");
                     }
                 }
             } else {
@@ -347,6 +349,7 @@ public class AgenteRestaurante extends Agent {
                     platosCocinados.add(Plato.valueOf(contenido[1]));
                 } else {
                     myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: "+contenido[1]);
+                    contCocinas++;
                 }
             }
 
