@@ -4,3 +4,9 @@ CocinaYantarGood:es.ujaen.ssmmaa.agentes.AgenteCocina
 4
 RestauranteMega:es.ujaen.ssmmaa.agentes.AgenteRestaurante
 10:15
+ClienteFernando:es.ujaen.ssmmaa.agentes.AgenteCliente
+Nachos_especiales:Tarta_de_queso
+CocinaCordobesa:es.ujaen.ssmmaa.agentes.AgenteCocina
+3
+RestauranteUja:es.ujaen.ssmmaa.agentes.AgenteRestaurante
+5:10

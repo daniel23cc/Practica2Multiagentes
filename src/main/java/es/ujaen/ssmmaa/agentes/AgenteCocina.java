@@ -152,8 +152,8 @@ public class AgenteCocina extends Agent {
                 }
             }
 
-            myGui.presentarSalida("El agente: " + myAgent.getName()
-                    + "ha encontrado a:\n\t" + dfad.getName());
+//            myGui.presentarSalida("El agente: " + myAgent.getName()
+//                    + "ha encontrado a:\n\t" + dfad.getName());
 //            System.out.println("El agente: " + myAgent.getName()
 //                    + "ha encontrado a:\n\t" + dfad.getName());
         }
