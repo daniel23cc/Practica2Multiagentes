@@ -6,11 +6,14 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
+import static es.ujaen.ssmmaa.agentes.Constantes.MAX_TIEMPO_COCINADO;
+import static es.ujaen.ssmmaa.agentes.Constantes.MIN_TIEMPO_COCINADO;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
 import es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
+import static es.ujaen.ssmmaa.agentes.Constantes.aleatorio;
 import es.ujaen.ssmmaa.gui.AgenteCocinaJFrame;
 import jade.core.AID;
 import jade.core.Agent;
@@ -68,7 +71,7 @@ public class AgenteCocina extends Agent {
         if (args != null && args.length > 0) {
             String argumento = (String) args[0];
             capacidadPlatos = Integer.parseInt(argumento);
-            myGui.presentarSalida("Capacidad " + capacidadPlatos + "\n");
+            myGui.presentarSalida("Cantidad que puedo preparar de cada tipo: " + capacidadPlatos + "\n");
         }
 
         // Inicializamos variablles
@@ -154,8 +157,6 @@ public class AgenteCocina extends Agent {
 
             myGui.presentarSalida("El agente: " + myAgent.getName()
                     + "ha encontrado a:\n\t" + dfad.getName());
-//            System.out.println("El agente: " + myAgent.getName()
-//                    + "ha encontrado a:\n\t" + dfad.getName());
         }
 
         @Override
@@ -164,9 +165,6 @@ public class AgenteCocina extends Agent {
 
             for (Constantes.NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
-//                    System.out.println("El agente: " + agente.getName()
-//                            + " ha sido eliminado de la lista de "
-//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
@@ -193,19 +191,22 @@ public class AgenteCocina extends Agent {
                 String[] contenido = mensaje.getContent().split(",");
                 myGui.presentarSalida("Recibida una solicitud de cocinar: " + contenido[0] + "\n");
                 //Compruebo de que tipo es el plato(entrante,principal o postre)
-                String tipoComanda = Plato.valueOf("Aceitunas").getOrdenComanda().name();
+                String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
 
                 int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
                 if (comandasDisp > 0) {
-                    //System.out.println("SE METE");
+
                     ACLMessage respuestaCocina = new ACLMessage(ACLMessage.CONFIRM);
                     respuestaCocina.addReceiver(mensaje.getSender());
                     respuestaCocina.setContent("ENVIADO," + contenido[0]);
-                    comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp - 1);
-
+                    comandasDisp--;
+                    comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
+                    myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: "+tipoComanda);
                     myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
                     try {
-                        Thread.sleep(5000);
+                        int tiempoPreparacion=aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
+                        myGui.presentarSalida("((Necesito "+tiempoPreparacion+" milisegundos))");
+                        Thread.sleep(tiempoPreparacion);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
                     }

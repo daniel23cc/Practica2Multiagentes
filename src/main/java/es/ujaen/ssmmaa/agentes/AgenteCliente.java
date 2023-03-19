@@ -6,13 +6,16 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
+import static es.ujaen.ssmmaa.agentes.Constantes.MAX_TIEMPO_PEDIR_PLATOS;
+import static es.ujaen.ssmmaa.agentes.Constantes.MIN_TIEMPO_PEDIR_PLATOS;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
+import static es.ujaen.ssmmaa.agentes.Constantes.PRIMERO;
 import jade.core.AID;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
-import static es.ujaen.ssmmaa.agentes.Constantes.Plato.pedirPlato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
+import static es.ujaen.ssmmaa.agentes.Constantes.aleatorio;
 import es.ujaen.ssmmaa.gui.AgenteClienteJFrame;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -98,10 +101,8 @@ public class AgenteCliente extends Agent {
         addBehaviour(new TareaSuscripcionDF(this, template));
         addBehaviour(new TareaEnvioSolicitudEntradaRestaurante(this, 2000));
         addBehaviour(new TareaRecibirContestacionRestaurante(this));
-        addBehaviour(new TareaPedirPlatos(this, 12000));
+        addBehaviour(new TareaPedirPlatos(this, aleatorio.nextInt(MAX_TIEMPO_PEDIR_PLATOS-MIN_TIEMPO_PEDIR_PLATOS)+MIN_TIEMPO_PEDIR_PLATOS));
         addBehaviour(new TareaRecibirPlato(this));
-
-        //addBehaviour(new TareaMostrar(this, 10000));
     }
 
     @Override
@@ -139,8 +140,6 @@ public class AgenteCliente extends Agent {
 
             myGui.presentarSalida("El agente: " + myAgent.getName()
                     + "ha encontrado a:\n\t" + dfad.getName());
-//            System.out.println("El agente: " + myAgent.getName()
-//                    + "ha encontrado a:\n\t" + dfad.getName());
         }
 
         @Override
@@ -149,9 +148,6 @@ public class AgenteCliente extends Agent {
 
             for (NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
-//                    System.out.println("El agente: " + agente.getName()
-//                            + " ha sido eliminado de la lista de "
-//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
@@ -213,7 +209,6 @@ public class AgenteCliente extends Agent {
 
                 if (mensaje != null) {
                     String[] contenido = mensaje.getContent().split(",");
-                    //myGui.presentarSalida("CONTENIDO: " + contenido[0] + "\n");
                     if (contenido[0].equals("OK")) {
                         myGui.presentarSalida("<-- He entrado al restaurante nº: "+cont);
                         heEntrado = true;
@@ -240,7 +235,7 @@ public class AgenteCliente extends Agent {
             if (heEntrado) {
                 //Plato platoPedido = Plato.pedirPlato();
                 if (!servicios.isEmpty()) {
-                    String platoPedido = servicios.remove(0);
+                    String platoPedido = servicios.remove(PRIMERO);
                     System.out.println("Cliente: " + getAID() + " pide: " + platoPedido);
 
                     //creo estructura mensaje
