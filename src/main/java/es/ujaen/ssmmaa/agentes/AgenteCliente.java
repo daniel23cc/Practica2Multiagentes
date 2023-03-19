@@ -40,7 +40,7 @@ public class AgenteCliente extends Agent {
     //Variables del agente
 
     private ArrayList<String> servicios;
-    private static boolean heEntrado;
+    private boolean heEntrado;
     private AgenteClienteJFrame myGui;
     private AID agenteRestaurante;
     private ArrayList<AID>[] listaAgentes;
@@ -68,11 +68,11 @@ public class AgenteCliente extends Agent {
         //obtengo el argumento
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            //System.out.println("HAY: " + args.length);
+            System.out.println("HAY: " + args.length);
             for (int i = 0; i < args.length; i++) {
                 servicios.add((String) args[i]);
             }
-            //System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
+            System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
         }
         //Registro del agente en las Páginas Amarrillas
         DFAgentDescription dfd = new DFAgentDescription();
@@ -149,9 +149,9 @@ public class AgenteCliente extends Agent {
 
             for (NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
-                    System.out.println("El agente: " + agente.getName()
-                            + " ha sido eliminado de la lista de "
-                            + myAgent.getName());
+//                    System.out.println("El agente: " + agente.getName()
+//                            + " ha sido eliminado de la lista de "
+//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
@@ -295,135 +295,4 @@ public class AgenteCliente extends Agent {
         }
     }
 }
-
-//addBehaviour(new TareaSuscripcionDF(this, template));
-//        addBehaviour(new CyclicBehaviour(this) {
-//            @Override
-//            public void action() {
-//                //registro paginas amarillas
-//
-//                try {
-//                    DFAgentDescription[] result = DFService.search(myAgent, dfd);
-//                    if (result.length > 0) {
-//                        agenteRestaurante = result[0].getName();
-//                    } else {
-//                        System.out.println("Error: no se ha encontrado ningún agente Restaurante.");
-//                        doDelete();
-//                    }
-//                } catch (FIPAException fe) {
-//                    System.out.println("Error: " + fe.getMessage());
-//                    doDelete();
-//                }
-//            }
-//
-//        });
-//        addBehaviour(new CyclicBehaviour(this) {
-//            public void action() {
-//                if (servicios.size() > 0) {
-//                    // Enviar solicitud de pedido al agente Restaurante
-//                    ACLMessage solicitudPedido = new ACLMessage(ACLMessage.REQUEST);
-//                    solicitudPedido.addReceiver(agenteRestaurante);
-//                    solicitudPedido.setContent(servicios.get(0).toString());
-//                    send(solicitudPedido);
-//                    servicios.remove(0);
-//                } else {
-//                    // Ya se han pedido todos los platos, terminar el comportamiento
-//                    stop();
-//                }
-//            }
-//        });
-//    private void serviceFinished() {
-//        servicioActual++;
-//        serviciosCompletados = 0;
-//        if (servicioActual < servicios.size()) {
-//            addBehaviour(new ComandaBehaviour(servicios.get(servicioActual)));
-//        } else {
-//            addBehaviour(new ServicioBehaviour());
-//        }
-//    }
-//
-//    private class ServicioBehaviour extends SequentialBehaviour {
-//
-//        private static final long serialVersionUID = 1L;
-//
-//        public ServicioBehaviour() {
-//            for (Plato servicio : servicios) {
-//                addSubBehaviour(new ComandaBehaviour(servicio));
-//            }
-//        }
-//
-//        @Override
-//        public int onEnd() {
-//            System.out.println(getAID().getName() + ": Servicios completados");
-//            doDelete();
-//            return super.onEnd();
-//        }
-//    }
-//
-//    private class ComandaBehaviour extends Behaviour {
-//
-//        private Plato servicio;
-//        private boolean platoPreparado = false;
-//
-//        public ComandaBehaviour(Plato servicio) {
-//            this.servicio = servicio;
-//        }
-//
-//        @Override
-//        public void action() {
-//            if (!platoPreparado) {
-//                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-//                msg.addReceiver(new AID("restaurante", AID.ISLOCALNAME));
-//                msg.setContent(servicio.toString());
-//                send(msg);
-//
-//                MessageTemplate mt = MessageTemplate.and(
-//                        MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-//                        MessageTemplate.MatchSender(new AID("cocina", AID.ISLOCALNAME))
-//                );
-//                ACLMessage respuesta = blockingReceive(mt);
-//                if (respuesta != null) {
-//                    System.out.println(getAID().getName() + ": " + servicio + " listo en " + respuesta.getSender().getName());
-//                    platoPreparado = true;
-//                } else {
-//                    block();
-//                }
-//            } else {
-//                serviciosCompletados++;
-//                System.out.println(getAID().getName() + ": Servicio " + servicio + " completado");
-//                if (serviciosCompletados == servicios.size()) {
-//                    myAgent.addBehaviour(new ServicioBehaviour());
-//                }
-//                serviceFinished();
-//            }
-//        }
-//
-//        @Override
-//        public boolean done() {
-//            return platoPreparado;
-//        }
-//
-//    }
-//Métodos de trabajo del agente
-//Clases internas que representan las tareas del agente
-//    public class PedirPlatos extends CyclicBehaviour {
-//
-//        public PedirPlatos() {
-//        }
-//
-//        @Override
-//        public void action() {
-//            if (platosPendientes > 0) {
-//                // Enviar solicitud de pedido al agente Restaurante
-//                ACLMessage solicitudPedido = new ACLMessage(ACLMessage.REQUEST);
-//                solicitudPedido.addReceiver(agenteRestaurante);
-//                solicitudPedido.setContent(listaPlatos.get(listaPlatos.size() - platosPendientes));
-//                send(solicitudPedido);
-//                platosPendientes--;
-//            } else {
-//                // Ya se han pedido todos los platos, terminar el comportamiento
-//                stop();
-//            }
-//        }
-//    }
 

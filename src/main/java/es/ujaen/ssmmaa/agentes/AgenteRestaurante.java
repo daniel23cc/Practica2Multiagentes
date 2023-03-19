@@ -5,7 +5,6 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
-import clasesAux.Mesa;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import es.ujaen.ssmmaa.agentes.Constantes.Comanda;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
@@ -122,34 +121,10 @@ public class AgenteRestaurante extends Agent {
         addBehaviour(new TareaRecibirContestacionCocina(this));
         addBehaviour(new TareaEnvioCliente(this));
 
-        //addBehaviour(new TareaRecepcionOperacion(this, dfd));
-//            try {
-//                DFService.register(this, dfd);
-//            } catch (FIPAException fe) {
-//                fe.printStackTrace();
-//            }
-        // Se añaden las tareas principales
-//            addBehaviour(new ServicioEntradaBehaviour());
-//            addBehaviour(new ServicioPrincipalBehaviour());
-//            addBehaviour(new ServicioPostreBehaviour());
-//            addBehaviour(new ServicioCuentaBehaviour());
-//            // Comportamiento periódico que simula el tiempo de servicio del restaurante
-//            addBehaviour(new TickerBehaviour(this, 5000) {
-//                public void onTick() {
-//                    if (numServiciosActuales < numServicios) {
-//                        numServiciosActuales++;
-//                        resetMesas();
-//                    }
-//                }
-//            });
+      
     }
 
-//    private void resetMesas() {
-//        mesas.clear();
-//        for (int i = 0; i < capacidad; i++) {
-//            mesas.add(new Mesa(i + 1));
-//        }
-//    }
+
 //
 //    /**
 //     * Se ejecuta al finalizar el agente
@@ -200,9 +175,9 @@ public class AgenteRestaurante extends Agent {
 
             for (NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
-                    System.out.println("El agente: " + agente.getName()
-                            + " ha sido eliminado de la lista de "
-                            + myAgent.getName());
+//                    System.out.println("El agente: " + agente.getName()
+//                            + " ha sido eliminado de la lista de "
+//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
