@@ -253,7 +253,7 @@ public class AgenteRestaurante extends Agent {
                         Plato plato = PLATOS[posplatoAPedir];
                         plato.setAIDcliente(mensaje.getSender());
                         platosPedidos.add(plato);
-                        System.out.println("--------HE añadido: " + plato.name());
+                        System.out.println("Vuelvo a añadir a la lista de platos pendientes: " + plato.name());
                     } else {
                         try {
                             myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);

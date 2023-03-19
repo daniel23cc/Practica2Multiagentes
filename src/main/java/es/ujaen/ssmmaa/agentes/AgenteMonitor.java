@@ -5,6 +5,7 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import auxiliares.Resultado;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.MONITOR;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import es.ujaen.ssmmaa.gui.AgenteMonitorJFrame;
@@ -20,6 +21,7 @@ import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -82,35 +84,36 @@ public class AgenteMonitor extends Agent {
             Object[] arrAux;
 
             try {
+                Resultado res = new Resultado(); //guardo los resultados
 
-                arrAux = new Object[arrayArgumentos.get(2).size()/2];
-                for (int i = 0; i < arrayArgumentos.get(2).size()/2; i++) {
+                arrAux = new Object[arrayArgumentos.get(2).size() / 2];
+                for (int i = 0; i < arrayArgumentos.get(2).size() / 2; i++) {
                     arrAux[i] = arrayArgumentos.get(2).get(i);
                 }
                 myGui2.presentarSalida("\nCreando agente Restaurante...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(2), arrayClaseAgentes.get(2), arrAux);
 
-                arrAux = new Object[arrayArgumentos.get(0).size()/2];
-                for (int i = 0; i < arrayArgumentos.get(0).size()/2; i++) {
+                arrAux = new Object[arrayArgumentos.get(0).size() / 2];
+                for (int i = 0; i < arrayArgumentos.get(0).size() / 2; i++) {
                     arrAux[i] = arrayArgumentos.get(0).get(i);
                 }
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(0) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
 
-                arrAux = new Object[arrayArgumentos.get(1).size()/2];
-                for (int i = 0; i < arrayArgumentos.get(1).size()/2; i++) {
+                arrAux = new Object[(arrayArgumentos.get(1).size() / 2) + 1];
+                for (int i = 0; i < arrayArgumentos.get(1).size() / 2; i++) {
                     arrAux[i] = arrayArgumentos.get(1).get(i);
                 }
+                arrAux[arrayArgumentos.get(1).size() / 2] = res;
+
                 myGui2.presentarSalida("\nCreando agente Cocina...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(1) + "; " + arrayClaseAgentes.get(1) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(1), arrayClaseAgentes.get(1), arrAux);
-                
-                
-               //
-//                arrAux = new Object[arrayArgumentos.get(2).size()/2];
-//                int c=0;
+
+                //arrAux = new Object[arrayArgumentos.get(2).size()/2];
+                int c = 0;
 //                for (int i = arrayArgumentos.get(2).size()/2; i < arrayArgumentos.get(2).size(); i++) {
 //                    arrAux[c++] = arrayArgumentos.get(2).get(i);
 //                }
@@ -118,14 +121,14 @@ public class AgenteMonitor extends Agent {
 //                System.out.println("ARGS: " + arrayNombreAgentes.get(5) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
 //                MicroRuntime.startAgent(arrayNombreAgentes.get(5), arrayClaseAgentes.get(2), arrAux);
 //
-//                Object[] arrAux2 = new Object[arrayArgumentos.get(0).size()/2];
-//                int c=0;
-//                for (int i = arrayArgumentos.get(0).size()/2; i < arrayArgumentos.get(0).size(); i++) {
-//                    arrAux2[c++] = arrayArgumentos.get(0).get(i);
-//                }
-//                myGui2.presentarSalida("\nCreando agente Cliente...");
-//                System.out.println("ARGS: " + arrayNombreAgentes.get(3) + "; " + arrayClaseAgentes.get(0) + " " + arrAux2);
-//                MicroRuntime.startAgent(arrayNombreAgentes.get(3),arrayClaseAgentes.get(0), arrAux2);
+                arrAux = new Object[arrayArgumentos.get(0).size() / 2];
+                c = 0;
+                for (int i = arrayArgumentos.get(0).size() / 2; i < arrayArgumentos.get(0).size(); i++) {
+                    arrAux[c++] = arrayArgumentos.get(0).get(i);
+                }
+                myGui2.presentarSalida("\nCreando agente Cliente...");
+                System.out.println("ARGS: " + arrayNombreAgentes.get(3) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
+                MicroRuntime.startAgent(arrayNombreAgentes.get(3), arrayClaseAgentes.get(0), arrAux);
 //
 //                arrAux = new Object[arrayArgumentos.get(1).size()/2];
 //                c=0;
@@ -136,13 +139,13 @@ public class AgenteMonitor extends Agent {
 //                System.out.println("ARGS: " + arrayNombreAgentes.get(4) + "; " + arrayClaseAgentes.get(1) + " " + arrAux);
 //                //MicroRuntime.startAgent(arrayNombreAgentes.get(4), arrayClaseAgentes.get(1), arrAux);
 
+                //guardarArchivo(res);
             } catch (Exception ex) {
                 Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
     }
-
 
     @Override
     protected void takeDown() {
@@ -223,7 +226,7 @@ public class AgenteMonitor extends Agent {
                 for (int i = 0; i < arrayNombreAgentes.size(); i++) {
                     myGui2.presentarSalida(arrayNombreAgentes.get(i) + "\n ");
                 }
-                
+
                 myGui2.presentarSalida("Clases Agentes que se van a crear: \n");
                 for (int i = 0; i < arrayClaseAgentes.size(); i++) {
                     myGui2.presentarSalida(arrayClaseAgentes.get(i) + "\n ");
@@ -245,6 +248,16 @@ public class AgenteMonitor extends Agent {
                 System.err.println("Error al leer el fichero de configuración: " + ex.getMessage());
                 throw new Exception();
             }
+        }
+    }
+
+    private void guardarArchivo(Resultado res) {
+        try {
+            FileWriter writer = new FileWriter("resultado.txt", true);
+            writer.write(res.getCajaTotal() + "\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

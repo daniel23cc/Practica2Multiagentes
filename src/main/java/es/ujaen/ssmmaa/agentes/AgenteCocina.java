@@ -5,12 +5,14 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import auxiliares.Resultado;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import static es.ujaen.ssmmaa.agentes.Constantes.MAX_TIEMPO_COCINADO;
 import static es.ujaen.ssmmaa.agentes.Constantes.MIN_TIEMPO_COCINADO;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.RESTAURANTE;
 import es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda;
+import static es.ujaen.ssmmaa.agentes.Constantes.PLATOS;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
 import static es.ujaen.ssmmaa.agentes.Constantes.aleatorio;
@@ -27,6 +29,8 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.util.leap.Iterator;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,6 +58,8 @@ public class AgenteCocina extends Agent {
     private int platosPreparados;
     private AgenteCocinaJFrame myGui;
 
+    private Resultado resultado;
+
     @Override
     protected void setup() {
         myGui = new AgenteCocinaJFrame(this);
@@ -72,6 +78,7 @@ public class AgenteCocina extends Agent {
             String argumento = (String) args[0];
             capacidadPlatos = Integer.parseInt(argumento);
             myGui.presentarSalida("Cantidad que puedo preparar de cada tipo: " + capacidadPlatos + "\n");
+            resultado = (Resultado) args[1];
         }
 
         // Inicializamos variablles
@@ -79,13 +86,13 @@ public class AgenteCocina extends Agent {
         tiposOrdenComanda = new HashSet<>();
         comandasDisponiblesPorOrdenComanda = new HashMap<>();
 
-// Iteramos sobre los elementos del enum Plato
+        // Iteramos sobre los elementos del enum Plato
         for (Plato p : Plato.values()) {
             // Añadimos el tipo de OrdenComanda de este Plato al HashSet
             tiposOrdenComanda.add(p.getOrdenComanda());
         }
 
-// Creamos un array de String con los elementos del HashSet
+        // Creamos un array de String con los elementos del HashSet
         String[] tiposOrdenComandaArray = tiposOrdenComanda.stream()
                 .map(OrdenComanda::name)
                 .toArray(String[]::new);
@@ -194,7 +201,7 @@ public class AgenteCocina extends Agent {
                 String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
 
                 int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
-                if (comandasDisp > 0) {
+                if (comandasDisp > 0) {//si todavia la cocina tiene capacidad de cocinar ese tipo de plato lo hace, sino dice al restaurante que no puede
 
                     ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
                     respuestaCocina.addReceiver(mensaje.getSender());
@@ -212,14 +219,18 @@ public class AgenteCocina extends Agent {
                     }
                     myGui.presentarSalida("Cocina YA HA cocinado el plato: " + contenido[0]);
                     myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: " + tipoComanda);
-                    myGui.presentarSalida("--> Enviando el plato al restaurante \n");
+                    myGui.presentarSalida("--> Enviando el plato al restaurante");
+
+                    //aumento la caja de lo que genera la cocina
+                    resultado.agregarDineroGenerado(PLATOS[Plato.valueOf(contenido[0]).ordinal()].getPrecio());
+                    myGui.presentarSalida("La caja va por: " + resultado.getCajaTotal() + "\n");
 
                     send(respuestaCocina);
                 }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
                 else {
                     ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
                     respuestaCocina.addReceiver(mensaje.getSender());
-                    respuestaCocina.setContent("SORRY,"+contenido[0]);
+                    respuestaCocina.setContent("SORRY," + contenido[0]);
                     send(respuestaCocina);
                 }
             }

@@ -1,7 +1,7 @@
 ClientePaquitito:es.ujaen.ssmmaa.agentes.AgenteCliente
 Aceitunas:Nachos_especiales
 CocinaYantarGud:es.ujaen.ssmmaa.agentes.AgenteCocina
-1
+4
 RestauranteRant:es.ujaen.ssmmaa.agentes.AgenteRestaurante
 10:15
 ClienteEugenio:es.ujaen.ssmmaa.agentes.AgenteCliente
