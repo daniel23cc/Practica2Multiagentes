@@ -19,6 +19,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.DFSubscriber;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -116,13 +117,11 @@ public class AgenteRestaurante extends Agent {
 
         addBehaviour(new TareaEntradaClientes(this));
         addBehaviour(new TareaSuscripcionDF(this, template));
-        addBehaviour(new TareaEnvioCocina(this));
-        addBehaviour(new TareaRecibirContestacionCocina(this));
+        addBehaviour(new TareaEnvioCocina(this,1000));
+        //addBehaviour(new TareaRecibirContestacionCocina(this));
         addBehaviour(new TareaEnvioCliente(this));
 
-      
     }
-
 
 //
 //    /**
@@ -242,42 +241,56 @@ public class AgenteRestaurante extends Agent {
                 if (mensaje != null) {
                     //procesamos el mensaje
                     String[] contenido = mensaje.getContent().split(",");
+                    if (contenido[0].equals("ENVIADO")) {
+                        myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
+                        platosCocinados.add(Plato.valueOf(contenido[1]));
+                    } else if (contenido[0].equals("SORRY")) {
+                        myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: " + contenido[1]);
+                        contCocinas++;
 
-                    try {
-                        myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
-                        //guardo el plato para proceder a solicitarlo mas tarde
-                        int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
-                        Plato plato=PLATOS[posplatoAPedir];
+                        //si hay fallo, vuelvo a añadirlo a la lista para que intente cocinarlo en otra cocina
+                        int posplatoAPedir = Plato.valueOf(contenido[1]).ordinal();
+                        Plato plato = PLATOS[posplatoAPedir];
                         plato.setAIDcliente(mensaje.getSender());
                         platosPedidos.add(plato);
-                    } catch (NumberFormatException ex) {
-                        // No sabemos tratar el mensaje y los presentamos por consola
-                        System.out.println("El agente: " + myAgent.getName()
-                                + " no entiende el contenido del mensaje: \n\t"
-                                + mensaje.getContent() + " enviado por: \n\t"
-                                + mensaje.getSender());
-                        myGui.presentarSalida("El agente: " + myAgent.getName()
-                                + " no entiende el contenido del mensaje:"
-                                + mensaje.getContent() + " enviado por:"
-                                + mensaje.getSender());
+                        System.out.println("--------HE añadido: " + plato.name());
+                    } else {
+                        try {
+                            myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
+                            //guardo el plato para proceder a solicitarlo mas tarde
+                            int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
+                            Plato plato = PLATOS[posplatoAPedir];
+                            plato.setAIDcliente(mensaje.getSender());
+                            platosPedidos.add(plato);
+                        } catch (NumberFormatException ex) {
+                            // No sabemos tratar el mensaje y los presentamos por consola
+                            System.out.println("El agente: " + myAgent.getName()
+                                    + " no entiende el contenido del mensaje: \n\t"
+                                    + mensaje.getContent() + " enviado por: \n\t"
+                                    + mensaje.getSender());
+                            myGui.presentarSalida("El agente: " + myAgent.getName()
+                                    + " no entiende el contenido del mensaje:"
+                                    + mensaje.getContent() + " enviado por:"
+                                    + mensaje.getSender());
+                        }
                     }
                 } else {
                     block();
                 }
-            }else {
+            } else {
                 myAgent.doDelete();
             }
         }
     }
 
-    public class TareaEnvioCocina extends CyclicBehaviour {
+    public class TareaEnvioCocina extends TickerBehaviour {
 
-        public TareaEnvioCocina(AgenteRestaurante aThis) {
-            super(aThis);
+        public TareaEnvioCocina(AgenteRestaurante aThis,long period) {
+            super(aThis,period);
         }
 
         @Override
-        public void action() {
+        public void onTick() {
 
             if (!platosPedidos.isEmpty()) {
                 //creo estructura mensaje
@@ -287,7 +300,7 @@ public class AgenteRestaurante extends Agent {
                 //Se añaden todos los agentes operación
                 int numAgentes = listaAgentes[COCINA.ordinal()].size();
                 myGui.presentarSalida("Agentes cocina encontrados:" + numAgentes);
-                if (listaAgentes[COCINA.ordinal()].size() < contCocinas) {
+                if (numAgentes <= contCocinas) {
                     contCocinas = 0;
                 }
                 mensaje.addReceiver(listaAgentes[COCINA.ordinal()].get(contCocinas));
@@ -295,7 +308,7 @@ public class AgenteRestaurante extends Agent {
                 //solicito entrar
                 mensaje.setContent(platosPedidos.remove(0).toString());
 
-                myGui.presentarSalida("---> ENVIANDO a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
+                myGui.presentarSalida("---> ENVIANDO solicitud a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
 
                 send(mensaje);
             }
@@ -304,36 +317,42 @@ public class AgenteRestaurante extends Agent {
 
     }
 
-    public class TareaRecibirContestacionCocina extends CyclicBehaviour {
-
-        public TareaRecibirContestacionCocina(AgenteRestaurante aThis) {
-            super(aThis);
-        }
-
-        @Override
-        public void action() {
-
-            MessageTemplate plantilla = MessageTemplate.and(
-                    MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
-            ACLMessage mensaje = myAgent.receive(plantilla);
-
-            if (mensaje != null) {
-                String[] contenido = mensaje.getContent().split(",");
-
-                if (contenido[0].equals("ENVIADO")) {
-                    myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
-                    platosCocinados.add(Plato.valueOf(contenido[1]));
-                } else {
-                    myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: "+contenido[1]);
-                    contCocinas++;
-                }
-            }
-
-        }
-
-    }
-
+//    public class TareaRecibirContestacionCocina extends CyclicBehaviour {
+//
+//        public TareaRecibirContestacionCocina(AgenteRestaurante aThis) {
+//            super(aThis);
+//        }
+//
+//        @Override
+//        public void action() {
+//
+//            MessageTemplate plantilla = MessageTemplate.and(
+//                    MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
+//                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+//            ACLMessage mensaje = myAgent.receive(plantilla);
+//
+//            if (mensaje != null) {
+//                String[] contenido = mensaje.getContent().split(",");
+//
+//                if (contenido[0].equals("ENVIADO")) {
+//                    myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
+//                    platosCocinados.add(Plato.valueOf(contenido[1]));
+//                } else {
+//                    myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: " + contenido[1]);
+//                    contCocinas++;
+//                    
+//                    //si hay fallo, vuelvo a añadirlo a la lista para que intente cocinarlo en otra cocina
+//                    int posplatoAPedir = Plato.valueOf(contenido[1]).ordinal();
+//                    Plato plato = PLATOS[posplatoAPedir];
+//                    plato.setAIDcliente(mensaje.getSender());
+//                    platosPedidos.add(plato);
+//                    System.out.println("--------HE añadido: "+plato.name());
+//                }
+//            }
+//
+//        }
+//
+//    }
     public class TareaEnvioCliente extends CyclicBehaviour {
 
         public TareaEnvioCliente(AgenteRestaurante aThis) {
@@ -344,7 +363,7 @@ public class AgenteRestaurante extends Agent {
         public void action() {
             if (!platosCocinados.isEmpty()) {
                 Plato platoAentregar = platosCocinados.remove(0);
-                
+
                 //creo estructura mensaje
                 ACLMessage mensaje = new ACLMessage(ACLMessage.CONFIRM);
                 //digo quien lo envia
@@ -357,7 +376,7 @@ public class AgenteRestaurante extends Agent {
 
                 myGui.presentarSalida("--->  ENVIANDO al cliente: " + platoAentregar.getAIDcliente() + " plato: " + platoAentregar.toString());
                 send(mensaje);
-                
+
                 numServicios++;
             }
         }

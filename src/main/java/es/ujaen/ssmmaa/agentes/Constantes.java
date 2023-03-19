@@ -30,6 +30,7 @@ public class Constantes {
     public static final int MAX_TIEMPO_COCINADO = 7000;
     public static final int MIN_TIEMPO_PEDIR_PLATOS=10000;
     public static final int MAX_TIEMPO_PEDIR_PLATOS=16000;
+    public static final int MAXIMOS_INTENTOS_COMER=3;
 
     public enum NombreServicio { //hijo
         CLIENTE, RESTAURANTE, COCINA, MONITOR

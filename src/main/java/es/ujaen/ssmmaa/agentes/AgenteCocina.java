@@ -196,7 +196,7 @@ public class AgenteCocina extends Agent {
                 int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
                 if (comandasDisp > 0) {
 
-                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.CONFIRM);
+                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
                     respuestaCocina.addReceiver(mensaje.getSender());
                     respuestaCocina.setContent("ENVIADO," + contenido[0]);
                     comandasDisp--;
@@ -217,133 +217,13 @@ public class AgenteCocina extends Agent {
                     send(respuestaCocina);
                 }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
                 else {
-                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.CONFIRM);
+                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
                     respuestaCocina.addReceiver(mensaje.getSender());
-                    respuestaCocina.setContent("NOENVIADO");
+                    respuestaCocina.setContent("SORRY,"+contenido[0]);
                     send(respuestaCocina);
                 }
             }
 
-        }
-    }
-
-//    protected void recibirSolicitud() {
-//        ACLMessage msg = receive();
-//        if (msg != null) {
-//            String content = msg.getContent();
-//            String senderName = msg.getSender().getName();
-//            System.out.println("AgenteCocina " + getAID().getName() + " ha recibido una solicitud de " + senderName + " para preparar el plato " + content);
-//            if (cantidadPlatos > 0) {
-//                ACLMessage reply = msg.createReply();
-//                reply.setPerformative(ACLMessage.INFORM);
-//                reply.setContent("El plato " + content + " ha sido preparado.");
-//                send(reply);
-//                cantidadPlatos--;
-//            } else {
-//                ACLMessage reply = msg.createReply();
-//                reply.setPerformative(ACLMessage.REFUSE);
-//                reply.setContent("Lo siento, no hay suficientes ingredientes para preparar el plato " + content + ".");
-//                send(reply);
-//            }
-//        } 
-//    }
-//    //Métodos de trabajo del agente
-//    public class Tarea extends CyclicBehaviour {
-//
-//        public Tarea(Agent a) {
-//            super(a);
-//        }
-//
-//        @Override
-//        public void action() {
-//            // Esperar mensajes
-//            ACLMessage msg = receive();
-//            if (msg != null) {
-//                // Verificar si es una solicitud de preparación
-//                if (msg.getPerformative() == ACLMessage.REQUEST) {
-//                    // Obtener el plato solicitado
-//                    String plato = msg.getContent();
-//
-//                    // Verificar si hay disponibilidad para preparar el plato
-//                    if (capacidadPreparacion > 0) {
-//                        // Preparar el plato
-//                        capacidadPreparacion--;
-//
-//                        // Enviar mensaje de confirmación al restaurante
-//                        ACLMessage reply = msg.createReply();
-//                        reply.setPerformative(ACLMessage.INFORM);
-//                        reply.setContent("Plato " + plato + " preparado.");
-//                        send(reply);
-//                    } else {
-//                        // Enviar mensaje de rechazo al restaurante
-//                        ACLMessage reply = msg.createReply();
-//                        reply.setPerformative(ACLMessage.FAILURE);
-//                        reply.setContent("No hay disponibilidad para preparar el plato " + plato);
-//                        send(reply);
-//                    }
-//                } else {
-//                    // Mensaje no válido
-//                    System.out.println("Mensaje no válido recibido por el agente Cocina.");
-//                }
-//            } else {
-//                // No se recibió mensaje
-//                block();
-//            }
-//        }
-//
-//    }
-    //Clases internas que representan las tareas del agente
-    public class Tarea extends Behaviour {
-
-        public Tarea(AgenteCocina aThis) {
-            super(aThis);
-        }
-
-        @Override
-        public void action() {
-            // Esperamos a recibir un mensaje
-            ACLMessage msg = receive();
-            if (msg != null) {
-                String contenido = msg.getContent();
-                if (contenido.equals("NuevaComanda")) {
-                    // Recibimos el mensaje de una nueva comanda
-                    if (platosPreparados < capacidadPlatos) {
-                        // Si tenemos capacidad para preparar más platos, enviamos un mensaje al AgenteRestaurante para preparar un plato
-                        System.out.println("AgenteCocina - Preparando plato para la comanda.");
-                        ACLMessage mensaje = new ACLMessage(ACLMessage.REQUEST);
-                        mensaje.addReceiver(new AID("restaurante", AID.ISLOCALNAME));
-                        mensaje.setContent("Preparar:Plato" + (platosPreparados + 1));
-                        send(mensaje);
-                        // Incrementamos el contador de platos preparados
-                        platosPreparados++;
-                    } else {
-                        // Si no tenemos capacidad para preparar más platos, respondemos al AgenteRestaurante que no podemos preparar más platos
-                        System.out.println("AgenteCocina - No podemos preparar más platos.");
-                        ACLMessage respuesta = new ACLMessage(ACLMessage.REFUSE);
-                        respuesta.addReceiver(new AID("restaurante", AID.ISLOCALNAME));
-                        respuesta.setContent("CapacidadExcedida");
-                        send(respuesta);
-                    }
-                } else if (contenido.startsWith("PlatoPreparado")) {
-                    // Recibimos el mensaje de que un plato ha sido preparado
-                    String plato = contenido.substring(15);
-                    System.out.println("AgenteCocina - " + plato + " preparado.");
-                } else {
-                    // Si no es ninguna de las opciones anteriores, responder que no se entiende el mensaje
-                    System.out.println("AgenteCocina - No entiendo el mensaje recibido.");
-                    ACLMessage respuesta = new ACLMessage(ACLMessage.NOT_UNDERSTOOD);
-                    respuesta.addReceiver(msg.getSender());
-                    send(respuesta);
-                }
-            } else {
-                // Si no hemos recibido ningún mensaje, bloqueamos el comportamiento hasta que llegue uno nuevo
-                block();
-            }
-        }
-
-        @Override
-        public boolean done() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
 }

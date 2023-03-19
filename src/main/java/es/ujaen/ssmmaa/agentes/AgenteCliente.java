@@ -6,6 +6,7 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
+import static es.ujaen.ssmmaa.agentes.Constantes.MAXIMOS_INTENTOS_COMER;
 import static es.ujaen.ssmmaa.agentes.Constantes.MAX_TIEMPO_PEDIR_PLATOS;
 import static es.ujaen.ssmmaa.agentes.Constantes.MIN_TIEMPO_PEDIR_PLATOS;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
@@ -48,6 +49,7 @@ public class AgenteCliente extends Agent {
     private AID agenteRestaurante;
     private ArrayList<AID>[] listaAgentes;
     private AID agenteDF;
+    private int intentosComer;
 
     private int cont = 0;
 
@@ -67,6 +69,7 @@ public class AgenteCliente extends Agent {
         //Incialización de variables
         servicios = new ArrayList<>();
         heEntrado = false;
+        intentosComer=0;
   
         //obtengo el argumento
         Object[] args = getArguments();
@@ -176,7 +179,7 @@ public class AgenteCliente extends Agent {
                     //Se añaden todos los agentes operación
                     int numAgentes = listaAgentes[RESTAURANTE.ordinal()].size();
                     myGui.presentarSalida("Agentes restaurante encontrados:" + numAgentes + "\n");
-                    if (listaAgentes[RESTAURANTE.ordinal()].size() < cont) {
+                    if (numAgentes <= cont) {
                         cont = 0;
                     }
                     mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(cont));
@@ -235,7 +238,7 @@ public class AgenteCliente extends Agent {
             if (heEntrado) {
                 //Plato platoPedido = Plato.pedirPlato();
                 if (!servicios.isEmpty()) {
-                    String platoPedido = servicios.remove(PRIMERO);
+                    String platoPedido = servicios.get(PRIMERO);
                     System.out.println("Cliente: " + getAID() + " pide: " + platoPedido);
 
                     //creo estructura mensaje
@@ -281,6 +284,7 @@ public class AgenteCliente extends Agent {
                 ACLMessage mensaje = myAgent.receive(plantilla);
 
                 if (mensaje != null) {
+                    servicios.remove(PRIMERO);
                     String[] contenido = mensaje.getContent().split(",");
                     myGui.presentarSalida("***************************");
                     myGui.presentarSalida("Comiendo: "+contenido[0]);
@@ -289,5 +293,31 @@ public class AgenteCliente extends Agent {
             }
         }
     }
+    
+//    public class TareaRechazoPlato extends CyclicBehaviour {
+//
+//        public TareaRechazoPlato(AgenteCliente aThis) {
+//            super(aThis);
+//        }
+//
+//        @Override
+//        public void action() {
+//            if (heEntrado) {
+//                MessageTemplate plantilla = MessageTemplate.and(
+//                        MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM),
+//                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+//                ACLMessage mensaje = myAgent.receive(plantilla);
+//
+//                if (mensaje != null) {
+//                    intentosComer++;
+//                    myGui.presentarSalida("Cliente NO pudo comer, cocina sin servicios");
+//                    if(intentosComer==MAXIMOS_INTENTOS_COMER){
+//                        myGui.presentarSalida("Cliente ha intentado comer "+MAXIMOS_INTENTOS_COMER+" veces sin exito, sale del Restaurante triste");
+//                        myAgent.doDelete();
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
 
