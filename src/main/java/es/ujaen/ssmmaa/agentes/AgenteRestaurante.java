@@ -6,7 +6,6 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
-import es.ujaen.ssmmaa.agentes.Constantes.Comanda;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
@@ -115,14 +114,16 @@ public class AgenteRestaurante extends Agent {
         templateSd.setType(TIPO_SERVICIO);
         template.addServices(templateSd);
 
-        addBehaviour(new TareaEntradaClientes(this));
         addBehaviour(new TareaSuscripcionDF(this, template));
-        addBehaviour(new TareaEnvioCocina(this));
+        addBehaviour(new TareaEntradaClientes(this));
         addBehaviour(new TareaRecibirContestacionCocina(this));
+        addBehaviour(new TareaRecepcion());
         addBehaviour(new TareaEnvioCliente(this));
 
-      
+        
     }
+
+
 
 
 //
@@ -202,6 +203,7 @@ public class AgenteRestaurante extends Agent {
                 ACLMessage mensaje = myAgent.receive(plantilla);
 
                 if (mensaje != null) {
+                    System.out.println("NUM SERV: "+numServicios);
                     String[] contenido = mensaje.getContent().split(",");
                     //myGui.presentarSalida("CONTENIDO: " + contenido[1] + "\n");
                     if (numComensales < capacidadComensales) {
@@ -213,8 +215,10 @@ public class AgenteRestaurante extends Agent {
                         respuestaEntrada.setContent("OK");
                         send(respuestaEntrada);
                         numComensales++;
-                        addBehaviour(new TareaRecepcion());
+                        
                         myGui.presentarSalida("--> Aceptacion de entrada al cliente");
+                        addBehaviour(new TareaEnvioCocina((AgenteRestaurante) myAgent));
+        
                     }// si no hay capacidad, responder que no se puede entrar
                     else {
                         ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
@@ -225,7 +229,7 @@ public class AgenteRestaurante extends Agent {
                     }
                 }
             } else {
-                myAgent.doDelete();
+                //myAgent.doDelete();
             }
         }
     }
@@ -250,10 +254,10 @@ public class AgenteRestaurante extends Agent {
                         platosPedidos.add(PLATOS[posplatoAPedir]);
                     } catch (NumberFormatException ex) {
                         // No sabemos tratar el mensaje y los presentamos por consola
-                        System.out.println("El agente: " + myAgent.getName()
-                                + " no entiende el contenido del mensaje: \n\t"
-                                + mensaje.getContent() + " enviado por: \n\t"
-                                + mensaje.getSender());
+//                        System.out.println("El agente: " + myAgent.getName()
+//                                + " no entiende el contenido del mensaje: \n\t"
+//                                + mensaje.getContent() + " enviado por: \n\t"
+//                                + mensaje.getSender());
                         myGui.presentarSalida("El agente: " + myAgent.getName()
                                 + " no entiende el contenido del mensaje:"
                                 + mensaje.getContent() + " enviado por:"
@@ -296,6 +300,8 @@ public class AgenteRestaurante extends Agent {
                 myGui.presentarSalida("---> ENVIANDO a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
 
                 send(mensaje);
+                
+        
             }
 
         }
@@ -322,6 +328,7 @@ public class AgenteRestaurante extends Agent {
                 if (contenido[0].equals("ENVIADO")) {
                     myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
                     platosCocinados.add(Plato.valueOf(contenido[1]));
+                    
                 } else {
                     myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: "+contenido[1]);
                     contCocinas++;

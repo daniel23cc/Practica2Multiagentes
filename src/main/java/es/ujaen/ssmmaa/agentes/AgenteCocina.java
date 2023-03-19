@@ -164,9 +164,9 @@ public class AgenteCocina extends Agent {
 
             for (Constantes.NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
-                    System.out.println("El agente: " + agente.getName()
-                            + " ha sido eliminado de la lista de "
-                            + myAgent.getName());
+//                    System.out.println("El agente: " + agente.getName()
+//                            + " ha sido eliminado de la lista de "
+//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
