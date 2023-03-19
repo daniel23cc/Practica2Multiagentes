@@ -8,6 +8,7 @@ package es.ujaen.ssmmaa.agentes;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.ENTRANTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.POSTRE;
 import static es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda.PRINCIPAL;
+import jade.core.AID;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
@@ -40,6 +41,7 @@ public class Constantes {
         Tarta_de_queso(POSTRE, 5.19),
         Helado_frambuesa(POSTRE, 1.99);
 
+        
         @Override
         public String toString() {
             return name() + ","+ ordenComanda +","+ precio;
@@ -47,6 +49,8 @@ public class Constantes {
 
         private OrdenComanda ordenComanda;
         private double precio;
+        
+        private AID AIDcliente;
 
         private Plato(OrdenComanda ordenComanda, double precio) {
             this.ordenComanda = ordenComanda;
@@ -64,6 +68,15 @@ public class Constantes {
         public String getNombre() {
             return name();
         }
+        
+        public AID getAIDcliente() {
+            return AIDcliente;
+        }
+
+        public void setAIDcliente(AID AIDcliente) {
+            this.AIDcliente = AIDcliente;
+        }
+
 
         public static Plato pedirPlato() {//Obtengo un plato aleatorio
             int tiradaDado = aleatorio.nextInt(CATEGORIAS.length);

@@ -54,7 +54,7 @@ public class AgenteRestaurante extends Agent {
     private ArrayList<Plato> platosPedidos;
     private ArrayList<Plato> platosCocinados;
     private AID agenteDF;
-    private AID cliente;
+    //private AID cliente;
     private int contCocinas = 0;
 
     /**
@@ -114,16 +114,14 @@ public class AgenteRestaurante extends Agent {
         templateSd.setType(TIPO_SERVICIO);
         template.addServices(templateSd);
 
-        addBehaviour(new TareaSuscripcionDF(this, template));
         addBehaviour(new TareaEntradaClientes(this));
+        addBehaviour(new TareaSuscripcionDF(this, template));
+        addBehaviour(new TareaEnvioCocina(this));
         addBehaviour(new TareaRecibirContestacionCocina(this));
-        addBehaviour(new TareaRecepcion());
         addBehaviour(new TareaEnvioCliente(this));
 
-        
+      
     }
-
-
 
 
 //
@@ -203,22 +201,20 @@ public class AgenteRestaurante extends Agent {
                 ACLMessage mensaje = myAgent.receive(plantilla);
 
                 if (mensaje != null) {
-                    System.out.println("NUM SERV: "+numServicios);
                     String[] contenido = mensaje.getContent().split(",");
                     //myGui.presentarSalida("CONTENIDO: " + contenido[1] + "\n");
                     if (numComensales < capacidadComensales) {
                         //System.out.println("SE METE");
-                        cliente = mensaje.getSender();
+                        //cliente = mensaje.getSender();
 
                         ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
-                        respuestaEntrada.addReceiver(cliente);
+                        //respuestaEntrada.addReceiver(cliente);
+                        respuestaEntrada.addReceiver(mensaje.getSender());
                         respuestaEntrada.setContent("OK");
                         send(respuestaEntrada);
                         numComensales++;
-                        
+                        addBehaviour(new TareaRecepcion());
                         myGui.presentarSalida("--> Aceptacion de entrada al cliente");
-                        addBehaviour(new TareaEnvioCocina((AgenteRestaurante) myAgent));
-        
                     }// si no hay capacidad, responder que no se puede entrar
                     else {
                         ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
@@ -229,7 +225,7 @@ public class AgenteRestaurante extends Agent {
                     }
                 }
             } else {
-                //myAgent.doDelete();
+                myAgent.doDelete();
             }
         }
     }
@@ -251,13 +247,15 @@ public class AgenteRestaurante extends Agent {
                         myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
                         //guardo el plato para proceder a solicitarlo mas tarde
                         int posplatoAPedir = Plato.valueOf(contenido[0]).ordinal();
-                        platosPedidos.add(PLATOS[posplatoAPedir]);
+                        Plato plato=PLATOS[posplatoAPedir];
+                        plato.setAIDcliente(mensaje.getSender());
+                        platosPedidos.add(plato);
                     } catch (NumberFormatException ex) {
                         // No sabemos tratar el mensaje y los presentamos por consola
-//                        System.out.println("El agente: " + myAgent.getName()
-//                                + " no entiende el contenido del mensaje: \n\t"
-//                                + mensaje.getContent() + " enviado por: \n\t"
-//                                + mensaje.getSender());
+                        System.out.println("El agente: " + myAgent.getName()
+                                + " no entiende el contenido del mensaje: \n\t"
+                                + mensaje.getContent() + " enviado por: \n\t"
+                                + mensaje.getSender());
                         myGui.presentarSalida("El agente: " + myAgent.getName()
                                 + " no entiende el contenido del mensaje:"
                                 + mensaje.getContent() + " enviado por:"
@@ -300,8 +298,6 @@ public class AgenteRestaurante extends Agent {
                 myGui.presentarSalida("---> ENVIANDO a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
 
                 send(mensaje);
-                
-        
             }
 
         }
@@ -328,7 +324,6 @@ public class AgenteRestaurante extends Agent {
                 if (contenido[0].equals("ENVIADO")) {
                     myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
                     platosCocinados.add(Plato.valueOf(contenido[1]));
-                    
                 } else {
                     myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: "+contenido[1]);
                     contCocinas++;
@@ -348,18 +343,19 @@ public class AgenteRestaurante extends Agent {
         @Override
         public void action() {
             if (!platosCocinados.isEmpty()) {
+                Plato platoAentregar = platosCocinados.remove(0);
+                
                 //creo estructura mensaje
                 ACLMessage mensaje = new ACLMessage(ACLMessage.CONFIRM);
                 //digo quien lo envia
                 mensaje.setSender(myAgent.getAID());
                 //Se envia el cliente previo
-                mensaje.addReceiver(cliente);
+                mensaje.addReceiver(platoAentregar.getAIDcliente());
 
                 //envio el plato
-                Plato platoAentregar = platosCocinados.remove(0);
                 mensaje.setContent(platoAentregar.toString());
 
-                myGui.presentarSalida("--->  ENVIANDO al cliente: " + cliente + " plato: " + platoAentregar.toString());
+                myGui.presentarSalida("--->  ENVIANDO al cliente: " + platoAentregar.getAIDcliente() + " plato: " + platoAentregar.toString());
                 send(mensaje);
                 
                 numServicios++;
@@ -368,212 +364,4 @@ public class AgenteRestaurante extends Agent {
 
     }
 
-//
-//    private class ServicioEntradaBehaviour extends Behaviour {
-//
-//        private MessageTemplate mt;
-//        private int step = 0;
-//        private int cantidadPlatoEntrante;
-//
-//        public ServicioEntradaBehaviour(int cantidadPlatoEntrante) {
-//            this.cantidadPlatoEntrante = cantidadPlatoEntrante;
-//        }
-//
-//        @Override
-//        public void action() {
-//            switch (step) {
-//                case 0:
-//                    // Buscar cocinas disponibles para el plato entrante
-//                    DFAgentDescription template = new DFAgentDescription();
-//                    ServiceDescription sd = new ServiceDescription();
-//                    sd.setType("cocina");
-//                    sd.setName(OrdenComanda.ENTRANTE.toString());
-//                    template.addServices(sd);
-//                    try {
-//                        DFAgentDescription[] result = DFService.search(myAgent, template);
-//                        if (result.length > 0) {
-//                            // Se encontró al menos una cocina disponible
-//                            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-//                            msg.addReceiver(result[0].getName());
-//                            msg.setContent(cantidadPlatoEntrante + "");
-//                            msg.setConversationId("preparar-plato");
-//                            myAgent.send(msg);
-//                            mt = MessageTemplate.and(MessageTemplate.MatchConversationId("preparar-plato"),
-//                                    MessageTemplate.MatchInReplyTo(msg.getReplyWith()));
-//                            step = 1;
-//                        } else {
-//                            // No se encontró ninguna cocina disponible
-//                            step = 2;
-//                        }
-//                    } catch (FIPAException fe) {
-//                        fe.printStackTrace();
-//                    }
-//                    break;
-//                case 1:
-//                    // Esperar respuesta de la cocina
-//                    ACLMessage respuesta = myAgent.receive(mt);
-//                    if (respuesta != null) {
-//                        if (respuesta.getPerformative() == ACLMessage.CONFIRM) {
-//                            // El plato fue preparado correctamente
-//                            cantidadPlatoEntrante--;
-//                            if (cantidadPlatoEntrante == 0) {
-//                                step = 2;
-//                            } else {
-//                                step = 0;
-//                            }
-//                        } else if (respuesta.getPerformative() == ACLMessage.DISCONFIRM) {
-//                            // La cocina no pudo preparar el plato
-//                            step = 2;
-//                        }
-//                    } else {
-//                        block();
-//                    }
-//                    break;
-//                case 2:
-//                    // Liberar mesas que no fueron utilizadas
-//                    if (numClientesEsperandoEntrada > 0) {
-//                        for (int i = 0; i < mesas.length; i++) {
-//                            if (mesas[i] == null) {
-//                                numClientesEsperandoEntrada--;
-//                                if (numClientesEsperandoEntrada == 0) {
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                    }
-//                    // Finalizar comportamiento
-//                    finished = true;
-//                    break;
-//            }
-//        }
-//
-//        public boolean done() {
-//            return finished;
-//        }
-//    }
-//    private class AtenderClientes extends CyclicBehaviour {
-//
-//        private int serviciosRestantes = serviciosAPreparar;
-//        private int usuariosEnRestaurante = 0;
-//        private final Random random = new Random();
-//
-//        public AtenderClientes() {
-//        }
-//
-//        @Override
-//        public void action() {
-//            // Esperamos a recibir un mensaje
-//            ACLMessage msg = receive();
-//            if (msg != null) {
-//                String contenido = msg.getContent();
-//                if (contenido.equals("NuevaComanda")) {
-//                    // Recibimos el mensaje de una nueva comanda
-//                    if (usuariosEnRestaurante < capacidadMaximaClientes) {
-//                        // Aceptar solicitud y enviar mensaje de confirmación
-//                        ACLMessage reply = msg.createReply();
-//                        reply.setPerformative(ACLMessage.AGREE);
-//                        reply.setContent("Solicitud aceptada");
-//                        send(reply);
-//
-//                        // Incrementar usuarios en el restaurante
-//                        usuariosEnRestaurante++;
-//
-//                        try {
-//                            // Esperar un tiempo aleatorio para simular atención al cliente
-//                            Thread.sleep(random.nextInt(5000) + 3000);
-//                        } catch (InterruptedException ex) {
-//                            Logger.getLogger(AgenteRestaurante.class.getName()).log(Level.SEVERE, null, ex);
-//                        }
-//
-//                        // Enviar mensaje al agente Cocina indicando que se preparó el plato
-//                        ACLMessage msgCocina = new ACLMessage(ACLMessage.INFORM);
-//                        msgCocina.addReceiver(new AID("Cocina", AID.ISLOCALNAME));
-//                        msgCocina.setContent("Plato preparado");
-//                        send(msgCocina);
-//
-//                        // Decrementar usuarios en el restaurante
-//                        usuariosEnRestaurante--;
-//
-//                        // Verificar si se han completado todos los servicios
-//                        serviciosRestantes--;
-//                        if (serviciosRestantes == 0) {
-//                            System.out.println("Restaurante ha finalizado sus servicios.");
-//                            doDelete();
-//                        }
-//
-//                    } else {
-//                        // Rechazar solicitud y enviar mensaje de error
-//                        ACLMessage reply = msg.createReply();
-//                        reply.setPerformative(ACLMessage.REFUSE);
-//                        reply.setContent("Restaurante lleno");
-//                        send(reply);
-//                    }
-//                } else {
-//                    block();
-//                }
-//            }
-//        }
-//    }
-//Métodos del agente
-//Clases que representan las tareas del agente
-//  public class AtenderClientes extends CyclicBehaviour {
-//
-//        //private int serviciosRestantes = numServicios;
-//        //private int usuariosEnRestaurante = 0;
-//        //private Random random = new Random();
-//
-//        public AtenderClientes() {
-//        }
-//
-//        @Override
-//        public void action() {
-//            // Esperar mensaje de solicitud de cliente
-//            ACLMessage msg = receive();
-//            if (msg != null) {
-//                // Verificar si hay capacidad de atención
-//                if (usuariosEnRestaurante < capacidadAtencion) {
-//                    // Aceptar solicitud y enviar mensaje de confirmación
-//                    ACLMessage reply = msg.createReply();
-//                    reply.setPerformative(ACLMessage.AGREE);
-//                    reply.setContent("Solicitud aceptada");
-//                    send(reply);
-//
-//                    // Incrementar usuarios en el restaurante
-//                    usuariosEnRestaurante++;
-//
-//                    // Esperar un tiempo aleatorio para simular atención al cliente
-//                    try {
-//                        Thread.sleep(random.nextInt(5000) + 3000);
-//                    } catch (InterruptedException ex) {
-//                    }
-//
-//                    // Enviar mensaje al agente Cocina indicando que se preparó el plato
-//                    ACLMessage msgCocina = new ACLMessage(ACLMessage.INFORM);
-//                    msgCocina.addReceiver(new AID("Cocina", AID.ISLOCALNAME));
-//                    msgCocina.setContent("Plato preparado");
-//                    send(msgCocina);
-//
-//                    // Decrementar usuarios en el restaurante
-//                    usuariosEnRestaurante--;
-//
-//                    // Verificar si se han completado todos los servicios
-//                    serviciosRestantes--;
-//                    if (serviciosRestantes == 0) {
-//                        System.out.println("Restaurante ha finalizado sus servicios.");
-//                        doDelete();
-//                    }
-//
-//                } else {
-//                    // Rechazar solicitud y enviar mensaje de error
-//                    ACLMessage reply = msg.createReply();
-//                    reply.setPerformative(ACLMessage.REFUSE);
-//                    reply.setContent("Restaurante lleno");
-//                    send(reply);
-//                }
-//            } else {
-//                block();
-//            }
-//        }
-//
-//    }
 }

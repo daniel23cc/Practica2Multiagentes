@@ -51,7 +51,6 @@ public class AgenteCliente extends Agent {
     @Override
     protected void setup() {
 
-         System.getProperty("java.classpath");
         myGui = new AgenteClienteJFrame(this);
         myGui.setVisible(true);
         myGui.presentarSalida("Se inicializa la ejecución de " + this.getName() + "\n");
@@ -97,9 +96,9 @@ public class AgenteCliente extends Agent {
         template.addServices(templateSd);
 
         addBehaviour(new TareaSuscripcionDF(this, template));
-        addBehaviour(new TareaEnvioSolicitudEntradaRestaurante(this, 3000));
+        addBehaviour(new TareaEnvioSolicitudEntradaRestaurante(this, 2000));
         addBehaviour(new TareaRecibirContestacionRestaurante(this));
-        addBehaviour(new TareaPedirPlatos(this, 4000));
+        addBehaviour(new TareaPedirPlatos(this, 12000));
         addBehaviour(new TareaRecibirPlato(this));
 
         //addBehaviour(new TareaMostrar(this, 10000));
@@ -253,17 +252,10 @@ public class AgenteCliente extends Agent {
                     mensaje.addReceiver(agenteRestaurante);
 
                     //solicito el plato
-                    mensaje.setContent(platoPedido);
+                    mensaje.setContent(platoPedido+","+myAgent.getAID());
 
                     myGui.presentarSalida("--> Solicitud del plato: " + mensaje.getContent() + "\n");
                     send(mensaje);
-                    
-                    try {
-                        Thread.sleep(4000);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(AgenteCliente.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
                 } else {
                     //borrar el cliente
                     myGui.presentarSalida("AGENTE YA HA ACABADO DE COMER TODOS SUS PLATOS");
