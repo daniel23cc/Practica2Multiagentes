@@ -5,10 +5,12 @@
  */
 package auxiliares;
 
+import static es.ujaen.ssmmaa.agentes.Constantes.ARCHIVO_GUARDADO;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
 import jade.core.AID;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -24,7 +26,7 @@ public class Resultado {
     private Date fechaSalida;
     private ArrayList<Plato> platosCliente;
     private double cajaTotal;
-    private String archivo = "resultado.txt";
+    
 
     public Resultado() {
         this.aidCliente = null;
@@ -86,8 +88,10 @@ public class Resultado {
     
     private void actualizarArchivo() {
         try {
-            FileWriter writer = new FileWriter(archivo);
-            writer.write("Dinero total generado: "+Double.toString(cajaTotal)+" €");
+            FileWriter writer = new FileWriter(ARCHIVO_GUARDADO);
+            DecimalFormat decimalFormat = new DecimalFormat("#.##");
+            String formattedNumber = decimalFormat.format(cajaTotal);
+            writer.write("Dinero total generado: "+formattedNumber+" €");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();

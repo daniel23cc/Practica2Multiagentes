@@ -6,6 +6,7 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
+import static es.ujaen.ssmmaa.agentes.Constantes.D100;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.COCINA;
@@ -14,6 +15,7 @@ import es.ujaen.ssmmaa.agentes.Constantes.OrdenComanda;
 import static es.ujaen.ssmmaa.agentes.Constantes.PLATOS;
 import es.ujaen.ssmmaa.agentes.Constantes.Plato;
 import static es.ujaen.ssmmaa.agentes.Constantes.TIPO_SERVICIO;
+import static es.ujaen.ssmmaa.agentes.Constantes.aleatorio;
 import es.ujaen.ssmmaa.gui.AgenteRestauranteJFrame;
 import jade.core.AID;
 import jade.core.Agent;
@@ -201,9 +203,7 @@ public class AgenteRestaurante extends Agent {
 
                 if (mensaje != null) {
                     String[] contenido = mensaje.getContent().split(",");
-                    //myGui.presentarSalida("CONTENIDO: " + contenido[1] + "\n");
                     if (numComensales < capacidadComensales) {
-                        //System.out.println("SE METE");
                         //cliente = mensaje.getSender();
 
                         ACLMessage respuestaEntrada = new ACLMessage(ACLMessage.INFORM);
@@ -228,6 +228,9 @@ public class AgenteRestaurante extends Agent {
             }
         }
     }
+    /*
+    tarea de recepción, tanto de las solicitudes de los platos de los clientes como del envio de los platos ya cocinados por parte de las cocinas
+    */
 
     public class TareaRecepcion extends CyclicBehaviour {
 
@@ -253,7 +256,6 @@ public class AgenteRestaurante extends Agent {
                         Plato plato = PLATOS[posplatoAPedir];
                         plato.setAIDcliente(mensaje.getSender());
                         platosPedidos.add(plato);
-                        System.out.println("Vuelvo a añadir a la lista de platos pendientes: " + plato.name());
                     } else {
                         try {
                             myGui.presentarSalida("El cliente: " + mensaje.getSender() + " ha pedido " + contenido[0]);
@@ -303,12 +305,23 @@ public class AgenteRestaurante extends Agent {
                 if (numAgentes <= contCocinas) {
                     contCocinas = 0;
                 }
-                mensaje.addReceiver(listaAgentes[COCINA.ordinal()].get(contCocinas));
+                
+                int cocinaAenviar;
+                
+                //aqui aplico un algoritmo donde reparto la presion selectiva, priorizaré el 90% de las veces repartir aleatoriamente los pedidos entre las cocinas
+                //sin embargo, dare oportunidad a cambiar la politica de reparto en caso de que las cocinas esten sobresaturadas
+                if(aleatorio.nextInt(D100)>80){
+                    cocinaAenviar=contCocinas;
+                }else{
+                    cocinaAenviar=aleatorio.nextInt(numAgentes);
+                }
+                
+                mensaje.addReceiver(listaAgentes[COCINA.ordinal()].get(cocinaAenviar));
 
                 //solicito entrar
                 mensaje.setContent(platosPedidos.remove(0).toString());
 
-                myGui.presentarSalida("---> ENVIANDO solicitud a la cocina nº:" + contCocinas + ": " + mensaje.getContent());
+                myGui.presentarSalida("---> ENVIANDO solicitud a la cocina nº:" + cocinaAenviar + ": " + mensaje.getContent());
 
                 send(mensaje);
             }
@@ -317,42 +330,6 @@ public class AgenteRestaurante extends Agent {
 
     }
 
-//    public class TareaRecibirContestacionCocina extends CyclicBehaviour {
-//
-//        public TareaRecibirContestacionCocina(AgenteRestaurante aThis) {
-//            super(aThis);
-//        }
-//
-//        @Override
-//        public void action() {
-//
-//            MessageTemplate plantilla = MessageTemplate.and(
-//                    MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-//                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
-//            ACLMessage mensaje = myAgent.receive(plantilla);
-//
-//            if (mensaje != null) {
-//                String[] contenido = mensaje.getContent().split(",");
-//
-//                if (contenido[0].equals("ENVIADO")) {
-//                    myGui.presentarSalida("<--- Restaurante ha recibido cocinado el plato: " + contenido[1]);
-//                    platosCocinados.add(Plato.valueOf(contenido[1]));
-//                } else {
-//                    myGui.presentarSalida("<--- Restaurante NO ha recibido cocinado el plato: " + contenido[1]);
-//                    contCocinas++;
-//                    
-//                    //si hay fallo, vuelvo a añadirlo a la lista para que intente cocinarlo en otra cocina
-//                    int posplatoAPedir = Plato.valueOf(contenido[1]).ordinal();
-//                    Plato plato = PLATOS[posplatoAPedir];
-//                    plato.setAIDcliente(mensaje.getSender());
-//                    platosPedidos.add(plato);
-//                    System.out.println("--------HE añadido: "+plato.name());
-//                }
-//            }
-//
-//        }
-//
-//    }
     public class TareaEnvioCliente extends CyclicBehaviour {
 
         public TareaEnvioCliente(AgenteRestaurante aThis) {

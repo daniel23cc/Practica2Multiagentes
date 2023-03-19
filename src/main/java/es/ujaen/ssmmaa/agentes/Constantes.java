@@ -31,6 +31,8 @@ public class Constantes {
     public static final int MIN_TIEMPO_PEDIR_PLATOS=10000;
     public static final int MAX_TIEMPO_PEDIR_PLATOS=16000;
     public static final int MAXIMOS_INTENTOS_COMER=3;
+    public static final int D100=101;
+    public static final String ARCHIVO_GUARDADO = "resultado.txt";
 
     public enum NombreServicio { //hijo
         CLIENTE, RESTAURANTE, COCINA, MONITOR
@@ -39,12 +41,20 @@ public class Constantes {
     public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
 
     public enum Plato {
+        
+        //carta de platos disponibles para pedir
         Aceitunas(ENTRANTE, 2.50),
         Nachos_especiales(ENTRANTE, 3.99),
         Macarrones_con_tomatico(PRINCIPAL, 5.99),
         Solomillo_a_la_pimienta(PRINCIPAL, 8.65),
         Tarta_de_queso(POSTRE, 5.19),
-        Helado_frambuesa(POSTRE, 1.99);
+        Helado_frambuesa(POSTRE, 1.99),
+        Carne_salsa_PEDROJimenez(PRINCIPAL,6.86),
+        Rosquillas_CCanada(POSTRE,2.49),
+        Solomillo_JFRuiz(PRINCIPAL,5.99),
+        Lubina_daltonica(PRINCIPAL,3.95),
+        Pastelon_magarcia(POSTRE,4.95),
+        Palomitas_abarca(ENTRANTE,1.54);
 
         
         @Override

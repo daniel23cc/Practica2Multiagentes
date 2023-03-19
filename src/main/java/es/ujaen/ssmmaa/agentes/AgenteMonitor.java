@@ -129,17 +129,17 @@ public class AgenteMonitor extends Agent {
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(3) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(3), arrayClaseAgentes.get(0), arrAux);
-//
-//                arrAux = new Object[arrayArgumentos.get(1).size()/2];
-//                c=0;
-//                for (int i = arrayArgumentos.get(1).size()/2; i < arrayArgumentos.get(1).size(); i++) {
-//                    arrAux[c++] = arrayArgumentos.get(1).get(i);
-//                }
-//                myGui2.presentarSalida("\nCreando agente Cocina...");
-//                System.out.println("ARGS: " + arrayNombreAgentes.get(4) + "; " + arrayClaseAgentes.get(1) + " " + arrAux);
-//                //MicroRuntime.startAgent(arrayNombreAgentes.get(4), arrayClaseAgentes.get(1), arrAux);
 
-                //guardarArchivo(res);
+                arrAux = new Object[(arrayArgumentos.get(1).size()/2)+1];
+                c=0;
+                for (int i = arrayArgumentos.get(1).size()/2; i < arrayArgumentos.get(1).size(); i++) {
+                    arrAux[c++] = arrayArgumentos.get(1).get(i);
+                }
+                arrAux[arrayArgumentos.get(1).size() / 2] = res;
+                myGui2.presentarSalida("\nCreando agente Cocina...");
+                System.out.println("ARGS: " + arrayNombreAgentes.get(4) + "; " + arrayClaseAgentes.get(1) + " " + arrAux);
+                MicroRuntime.startAgent(arrayNombreAgentes.get(4), arrayClaseAgentes.get(1), arrAux);
+
             } catch (Exception ex) {
                 Logger.getLogger(AgenteMonitor.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -251,15 +251,6 @@ public class AgenteMonitor extends Agent {
         }
     }
 
-    private void guardarArchivo(Resultado res) {
-        try {
-            FileWriter writer = new FileWriter("resultado.txt", true);
-            writer.write(res.getCajaTotal() + "\n");
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public int getTiempoCreacionAgentes() {
         return tiempoCreacionAgentes;
