@@ -1,10 +1,10 @@
-ClientePaquitito:es.ujaen.ssmmaa.agentes.AgenteCliente
+ClientePaquitito2:es.ujaen.ssmmaa.agentes.AgenteCliente
 Carne_salsa_PEDROJimenez:Pastelon_magarcia:Lubina_daltonica
 CocinaYantarGud:es.ujaen.ssmmaa.agentes.AgenteCocina
 4
-RestauranteRant:es.ujaen.ssmmaa.agentes.AgenteRestaurante
+RestauranteGlorioso:es.ujaen.ssmmaa.agentes.AgenteRestaurante
 10:15
-ClienteEugenio:es.ujaen.ssmmaa.agentes.AgenteCliente
+ClienteEugenio2:es.ujaen.ssmmaa.agentes.AgenteCliente
 Solomillo_JFRuiz:Tarta_de_queso:Rosquillas_CCanada
 CocinaCordobesaOmega:es.ujaen.ssmmaa.agentes.AgenteCocina
 3

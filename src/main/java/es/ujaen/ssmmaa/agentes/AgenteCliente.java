@@ -6,6 +6,7 @@
 package es.ujaen.ssmmaa.agentes;
 
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
+import static es.ujaen.ssmmaa.agentes.Constantes.D100;
 import static es.ujaen.ssmmaa.agentes.Constantes.MAXIMOS_INTENTOS_COMER;
 import static es.ujaen.ssmmaa.agentes.Constantes.MAX_TIEMPO_PEDIR_PLATOS;
 import static es.ujaen.ssmmaa.agentes.Constantes.MIN_TIEMPO_PEDIR_PLATOS;
@@ -49,7 +50,7 @@ public class AgenteCliente extends Agent {
     private AID agenteRestaurante;
     private ArrayList<AID>[] listaAgentes;
     private AID agenteDF;
-    private int intentosComer;
+    private int restAenviar;
 
     private int cont = 0;
 
@@ -69,8 +70,7 @@ public class AgenteCliente extends Agent {
         //Incialización de variables
         servicios = new ArrayList<>();
         heEntrado = false;
-        intentosComer=0;
-  
+
         //obtengo el argumento
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
@@ -104,7 +104,7 @@ public class AgenteCliente extends Agent {
         addBehaviour(new TareaSuscripcionDF(this, template));
         addBehaviour(new TareaEnvioSolicitudEntradaRestaurante(this, 2000));
         addBehaviour(new TareaRecibirContestacionRestaurante(this));
-        addBehaviour(new TareaPedirPlatos(this, aleatorio.nextInt(MAX_TIEMPO_PEDIR_PLATOS-MIN_TIEMPO_PEDIR_PLATOS)+MIN_TIEMPO_PEDIR_PLATOS));
+        addBehaviour(new TareaPedirPlatos(this, aleatorio.nextInt(MAX_TIEMPO_PEDIR_PLATOS - MIN_TIEMPO_PEDIR_PLATOS) + MIN_TIEMPO_PEDIR_PLATOS));
         addBehaviour(new TareaRecibirPlato(this));
     }
 
@@ -182,12 +182,22 @@ public class AgenteCliente extends Agent {
                     if (numAgentes <= cont) {
                         cont = 0;
                     }
-                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(cont));
+
+                    
+                    //aqui aplico un algoritmo donde reparto la presion selectiva, priorizaré el 90% de las veces repartir aleatoriamente los clientes entre los restaurantes
+                    //sin embargo, dare oportunidad a cambiar la politica de reparto en caso de que los restaurantes esten sobresaturados
+                    if (aleatorio.nextInt(D100) > 99) {
+                        restAenviar = cont;
+                    } else {
+                        restAenviar = aleatorio.nextInt(numAgentes);
+                    }
+ 
+                    mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(restAenviar));
 
                     //solicito entrar
                     mensaje.setContent("Cliente," + getAID().toString() + ",solicita entrar");
 
-                    myGui.presentarSalida("--> Solicitud entrar a Restaurante nº: "+cont);
+                    myGui.presentarSalida("--> Solicitud entrar a Restaurante nº: " + restAenviar);
                     send(mensaje);
 
                 }
@@ -213,12 +223,12 @@ public class AgenteCliente extends Agent {
                 if (mensaje != null) {
                     String[] contenido = mensaje.getContent().split(",");
                     if (contenido[0].equals("OK")) {
-                        myGui.presentarSalida("<-- He entrado al restaurante nº: "+cont);
+                        myGui.presentarSalida("<-- He entrado al restaurante nº: " + restAenviar);
                         heEntrado = true;
-                        agenteRestaurante=mensaje.getSender();
+                        agenteRestaurante = mensaje.getSender();
 
                     } else {
-                        myGui.presentarSalida("<-- NO He entrado al restaurante nº: "+cont);
+                        myGui.presentarSalida("<-- NO He entrado al restaurante nº: " + restAenviar);
                         cont++;
                     }
                 }
@@ -250,7 +260,7 @@ public class AgenteCliente extends Agent {
                     mensaje.addReceiver(agenteRestaurante);
 
                     //solicito el plato
-                    mensaje.setContent(platoPedido+","+myAgent.getAID());
+                    mensaje.setContent(platoPedido + "," + myAgent.getAID());
 
                     myGui.presentarSalida("--> Solicitud del plato: " + mensaje.getContent() + "\n");
                     send(mensaje);
@@ -287,37 +297,10 @@ public class AgenteCliente extends Agent {
                     servicios.remove(PRIMERO);
                     String[] contenido = mensaje.getContent().split(",");
                     myGui.presentarSalida("***************************");
-                    myGui.presentarSalida("Comiendo: "+contenido[0]);
+                    myGui.presentarSalida("Comiendo: " + contenido[0]);
                     myGui.presentarSalida("***************************");
                 }
             }
         }
     }
-    
-//    public class TareaRechazoPlato extends CyclicBehaviour {
-//
-//        public TareaRechazoPlato(AgenteCliente aThis) {
-//            super(aThis);
-//        }
-//
-//        @Override
-//        public void action() {
-//            if (heEntrado) {
-//                MessageTemplate plantilla = MessageTemplate.and(
-//                        MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM),
-//                        MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
-//                ACLMessage mensaje = myAgent.receive(plantilla);
-//
-//                if (mensaje != null) {
-//                    intentosComer++;
-//                    myGui.presentarSalida("Cliente NO pudo comer, cocina sin servicios");
-//                    if(intentosComer==MAXIMOS_INTENTOS_COMER){
-//                        myGui.presentarSalida("Cliente ha intentado comer "+MAXIMOS_INTENTOS_COMER+" veces sin exito, sale del Restaurante triste");
-//                        myAgent.doDelete();
-//                    }
-//                }
-//            }
-//        }
-//    }
 }
-
