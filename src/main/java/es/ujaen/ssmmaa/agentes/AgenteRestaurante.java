@@ -119,19 +119,14 @@ public class AgenteRestaurante extends Agent {
         addBehaviour(new TareaRecibirContestacionCocina(this));
         addBehaviour(new TareaRecepcion());
         addBehaviour(new TareaEnvioCliente(this));
-<<<<<<< HEAD
+
         
     }
 
 
-=======
-
-      
-    }
 
 
 //
->>>>>>> develop
 //    /**
 //     * Se ejecuta al finalizar el agente
 //     */
