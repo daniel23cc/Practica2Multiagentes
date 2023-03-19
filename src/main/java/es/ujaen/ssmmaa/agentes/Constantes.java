@@ -72,37 +72,4 @@ public class Constantes {
     }
 
     public static final Plato[] PLATOS = Plato.values();
-
-    //Serualizable para enviar la clase mediante cadena de bytes de forma eficiente
-    public class Comanda implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-        private int numMesa;
-        private ArrayList<Plato> platos;
-
-        public Comanda(int numMesa) {
-            this.numMesa = numMesa;
-            this.platos = new ArrayList<>();
-        }
-
-        public int getNumMesa() {
-            return numMesa;
-        }
-
-        public void addPlato(Plato plato) {
-            platos.add(plato);
-        }
-
-        public ArrayList<Plato> getPlatos() {
-            return platos;
-        }
-
-        public double calcularTotal() {
-            double total = 0;
-            for (Plato plato : platos) {
-                total += plato.getPrecio();
-            }
-            return total;
-        }
-    }
 }
