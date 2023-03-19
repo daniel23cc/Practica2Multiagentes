@@ -5,6 +5,7 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
+import auxiliares.Resultado;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import static es.ujaen.ssmmaa.agentes.Constantes.D100;
 import static es.ujaen.ssmmaa.agentes.Constantes.MAXIMOS_INTENTOS_COMER;
@@ -34,6 +35,7 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.MessageTemplate;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,6 +53,9 @@ public class AgenteCliente extends Agent {
     private ArrayList<AID>[] listaAgentes;
     private AID agenteDF;
     private int restAenviar;
+
+    private Resultado resultado;
+    private String claveMapa;
 
     private int cont = 0;
 
@@ -70,16 +75,20 @@ public class AgenteCliente extends Agent {
         //Incialización de variables
         servicios = new ArrayList<>();
         heEntrado = false;
+        String[] parts = getName().split("@");
+        claveMapa= parts[0].substring(0, parts[0].length() - 1);
 
         //obtengo el argumento
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
             System.out.println("HAY: " + args.length);
-            for (int i = 0; i < args.length; i++) {
+            for (int i = 0; i < args.length - 1; i++) {
                 servicios.add((String) args[i]);
             }
-            System.out.println(getAID().getName() + ": Mi lista de servicios es " + servicios);
+            resultado = (Resultado) args[args.length - 1];
         }
+
+        //resultado.addfechasLlegada(claveMapa, new Date());
         //Registro del agente en las Páginas Amarrillas
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -119,7 +128,7 @@ public class AgenteCliente extends Agent {
         //Liberación de recursos, incluido el GUI
         //Despedida
         myGui.dispose();
-        System.out.println("Finaliza la ejecución del agente: " + this.getName());
+        System.out.println("Finaliza la ejecución del agente: " + claveMapa);
     }
 
     public class TareaSuscripcionDF extends DFSubscriber {
@@ -183,7 +192,6 @@ public class AgenteCliente extends Agent {
                         cont = 0;
                     }
 
-                    
                     //aqui aplico un algoritmo donde reparto la presion selectiva, priorizaré el 90% de las veces repartir aleatoriamente los clientes entre los restaurantes
                     //sin embargo, dare oportunidad a cambiar la politica de reparto en caso de que los restaurantes esten sobresaturados
                     if (aleatorio.nextInt(D100) > 99) {
@@ -191,7 +199,7 @@ public class AgenteCliente extends Agent {
                     } else {
                         restAenviar = aleatorio.nextInt(numAgentes);
                     }
- 
+
                     mensaje.addReceiver(listaAgentes[RESTAURANTE.ordinal()].get(restAenviar));
 
                     //solicito entrar
@@ -226,6 +234,7 @@ public class AgenteCliente extends Agent {
                         myGui.presentarSalida("<-- He entrado al restaurante nº: " + restAenviar);
                         heEntrado = true;
                         agenteRestaurante = mensaje.getSender();
+                        //resultado.addfechasEntrada(claveMapa, new Date());
 
                     } else {
                         myGui.presentarSalida("<-- NO He entrado al restaurante nº: " + restAenviar);
@@ -299,6 +308,7 @@ public class AgenteCliente extends Agent {
                     myGui.presentarSalida("***************************");
                     myGui.presentarSalida("Comiendo: " + contenido[0]);
                     myGui.presentarSalida("***************************");
+                    //resultado.addfechasSalida(claveMapa, new Date());
                 }
             }
         }

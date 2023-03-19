@@ -11,8 +11,10 @@ import jade.core.AID;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  *
@@ -21,19 +23,21 @@ import java.util.Date;
 public class Resultado {
 
     private AID aidCliente;
-    private Date fechaLLegada;
-    private Date fechaEntrada;
-    private Date fechaSalida;
-    private ArrayList<Plato> platosCliente;
+    private HashMap<String, Date> fechasLlegada;
+    private HashMap<String, Date> fechasEntrada;
+    private HashMap<String, Date> fechasSalida;
+    private HashMap<String, ArrayList<Plato>> platosCliente;
+
+    private ArrayList<String> arrayNombres;
     private double cajaTotal;
-    
 
     public Resultado() {
         this.aidCliente = null;
-        this.fechaLLegada = new Date();
-        this.fechaEntrada = null;
-        this.fechaSalida = null;//si es null nunca habra salido
-        this.platosCliente = new ArrayList();
+        this.platosCliente = new HashMap<String, ArrayList<Plato>>();
+        this.fechasLlegada = new HashMap();
+        this.fechasEntrada = new HashMap<>();
+        this.fechasSalida = new HashMap<>();
+        this.arrayNombres = new ArrayList();
         this.cajaTotal = 0;
     }
 
@@ -45,62 +49,85 @@ public class Resultado {
         this.aidCliente = aidCliente;
     }
 
-    public Date getFechaLLegada() {
-        return fechaLLegada;
+    public void addfechasEntrada(String clave, Date date) {
+        fechasEntrada.put(clave, date);
+        actualizarArchivo();
     }
 
-    public void setFechaLLegada(Date fechaLLegada) {
-        this.fechaLLegada = fechaLLegada;
+    public void addfechasLlegada(String clave, Date date) {
+        fechasLlegada.put(clave, date);
+        actualizarArchivo();
     }
 
-    public Date getFechaEntrada() {
-        return fechaEntrada;
+    public void addfechasSalida(String clave, Date date) {
+        fechasSalida.put(clave, date);
+        actualizarArchivo();
     }
 
-    public void setFechaEntrada(Date fechaEntrada) {
-        this.fechaEntrada = fechaEntrada;
+    public void addPlato(String clave, ArrayList<Plato> platos) {
+        platosCliente.put(clave, platos);
     }
 
-    public Date getFechaSalida() {
-        return fechaSalida;
-    }
-
-    public void setFechaSalida(Date fechaSalida) {
-        this.fechaSalida = fechaSalida;
-    }
-
-    public ArrayList<Plato> getPlatosCliente() {
-        return platosCliente;
-    }
-
-    public void setPlatosCliente(ArrayList<Plato> platosCliente) {
-        this.platosCliente = platosCliente;
+    public void generarArrayNombres(ArrayList<String> array2) {
+        for (int i = 0; i < array2.size(); i++) {
+            arrayNombres.add(i, array2.get(i));
+            fechasLlegada.put(arrayNombres.get(i), new Date());
+            fechasEntrada.put(arrayNombres.get(i), new Date());
+            fechasSalida.put(arrayNombres.get(i), new Date());
+      
+        }
+        
+        
     }
 
     public double getCajaTotal() {
         return cajaTotal;
     }
 
+    public void setCajaTotal(double cajaTotal) {
+        this.cajaTotal = cajaTotal;
+    }
+
     public synchronized void agregarDineroGenerado(double dinero) {
         this.cajaTotal += dinero;
         actualizarArchivo();
     }
-    
+
     private void actualizarArchivo() {
         try {
             FileWriter writer = new FileWriter(ARCHIVO_GUARDADO);
             DecimalFormat decimalFormat = new DecimalFormat("#.##");
             String formattedNumber = decimalFormat.format(cajaTotal);
-            writer.write("Dinero total generado: "+formattedNumber+" €");
+            writer.write("Dinero total generado: " + formattedNumber + " €");
+//            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+//            writer.write("Fecha llegada clientes");
+//            for(int i=0;i<arrayNombres.size();i++){
+//                System.out.println(arrayNombres.get(i));
+//                System.out.println(fechasLlegada.get(arrayNombres.get(i)));
+//                writer.write(formatter.format(fechasLlegada.get(arrayNombres.get(i))));
+//            }
+//            System.out.println("PASA2");
+//            writer.write("Fecha entrada clientes");
+//            for(int i=0;i<arrayNombres.size();i++){
+//                writer.write(formatter.format(fechasEntrada.get(arrayNombres.get(i))));
+//            }
+//            writer.write("Fecha salida clientes");
+//            for(int i=0;i<arrayNombres.size();i++){
+//                writer.write(formatter.format(fechasSalida.get(arrayNombres.get(i))));
+//            }
+//            writer.write("Platos clientes");
+//            for(int i=0;i<arrayNombres.size();i++){
+//                writer.write("Platos cliente: "+arrayNombres.get(i));
+//                int numPlatos=platosCliente.get(arrayNombres.get(i)).size();
+//                for(int j=0;j<numPlatos;j++){
+//                    writer.write(platosCliente.get(arrayNombres.get(i)).get(j).getNombre()+",");
+//                }
+//            }
+            
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Resultado{" + "aidCliente=" + aidCliente + ", fechaLLegada=" + fechaLLegada + ", fechaEntrada=" + fechaEntrada + ", fechaSalida=" + fechaSalida + ", platosCliente=" + platosCliente + ", cajaTotal=" + cajaTotal + '}';
     }
 
 }
