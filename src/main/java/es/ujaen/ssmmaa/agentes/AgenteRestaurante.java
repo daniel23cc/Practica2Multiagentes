@@ -5,7 +5,6 @@
  */
 package es.ujaen.ssmmaa.agentes;
 
-import clasesAux.Mesa;
 import static es.ujaen.ssmmaa.agentes.Constantes.CATEGORIAS;
 import es.ujaen.ssmmaa.agentes.Constantes.NombreServicio;
 import static es.ujaen.ssmmaa.agentes.Constantes.NombreServicio.CLIENTE;
@@ -120,10 +119,19 @@ public class AgenteRestaurante extends Agent {
         addBehaviour(new TareaRecibirContestacionCocina(this));
         addBehaviour(new TareaRecepcion());
         addBehaviour(new TareaEnvioCliente(this));
+<<<<<<< HEAD
         
     }
 
 
+=======
+
+      
+    }
+
+
+//
+>>>>>>> develop
 //    /**
 //     * Se ejecuta al finalizar el agente
 //     */
