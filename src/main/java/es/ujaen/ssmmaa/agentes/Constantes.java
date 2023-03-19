@@ -26,8 +26,8 @@ public class Constantes {
     public static Random aleatorio = new Random();
     public static final String TIPO_SERVICIO = "SERVICIO"; //padre
     public static final int PRIMERO = 0;
-    public static final int MIN_TIEMPO_COCINADO = 2000;
-    public static final int MAX_TIEMPO_COCINADO = 6000;
+    public static final int MIN_TIEMPO_COCINADO = 4000;
+    public static final int MAX_TIEMPO_COCINADO = 7000;
     public static final int MIN_TIEMPO_PEDIR_PLATOS=10000;
     public static final int MAX_TIEMPO_PEDIR_PLATOS=16000;
 

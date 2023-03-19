@@ -189,7 +189,7 @@ public class AgenteCocina extends Agent {
 
             if (mensaje != null) {
                 String[] contenido = mensaje.getContent().split(",");
-                myGui.presentarSalida("Recibida una solicitud de cocinar: " + contenido[0] + "\n");
+                myGui.presentarSalida("<-- Recibida una solicitud de cocinar: " + contenido[0]);
                 //Compruebo de que tipo es el plato(entrante,principal o postre)
                 String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
 
@@ -201,16 +201,18 @@ public class AgenteCocina extends Agent {
                     respuestaCocina.setContent("ENVIADO," + contenido[0]);
                     comandasDisp--;
                     comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
-                    myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: "+tipoComanda);
+
                     myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
                     try {
-                        int tiempoPreparacion=aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
-                        myGui.presentarSalida("((Necesito "+tiempoPreparacion+" milisegundos))");
+                        int tiempoPreparacion = aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
+                        myGui.presentarSalida("((Necesito " + tiempoPreparacion + " milisegundos))");
                         Thread.sleep(tiempoPreparacion);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     myGui.presentarSalida("Cocina YA HA cocinado el plato: " + contenido[0]);
+                    myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: " + tipoComanda);
+                    myGui.presentarSalida("--> Enviando el plato al restaurante \n");
 
                     send(respuestaCocina);
                 }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
