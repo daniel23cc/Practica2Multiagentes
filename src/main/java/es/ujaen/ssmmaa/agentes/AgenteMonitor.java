@@ -36,6 +36,7 @@ public class AgenteMonitor extends Agent {
     //Variables del agente
     private String nombreFichero;
     private ArrayList<String> arrayNombreAgentes;
+    private ArrayList<String> arrayNombreClientes;
     private ArrayList<String> arrayClaseAgentes;
     private ArrayList<ArrayList<String>> arrayArgumentos;
     private AgenteMonitorJFrame myGui2;
@@ -43,6 +44,8 @@ public class AgenteMonitor extends Agent {
     private String nombreAgente;
     private String claseAgente;
     private int tiempoCreacionAgentes;
+    
+    Resultado res = new Resultado(); //guardo los resultados
 
     @Override
     protected void setup() {
@@ -84,8 +87,6 @@ public class AgenteMonitor extends Agent {
             Object[] arrAux;
 
             try {
-                Resultado res = new Resultado(); //guardo los resultados
-
                 arrAux = new Object[arrayArgumentos.get(2).size() / 2];
                 for (int i = 0; i < arrayArgumentos.get(2).size() / 2; i++) {
                     arrAux[i] = arrayArgumentos.get(2).get(i);
@@ -94,10 +95,11 @@ public class AgenteMonitor extends Agent {
                 System.out.println("ARGS: " + arrayNombreAgentes.get(2) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(2), arrayClaseAgentes.get(2), arrAux);
 
-                arrAux = new Object[arrayArgumentos.get(0).size() / 2];
+                arrAux = new Object[(arrayArgumentos.get(0).size() / 2) + 1];
                 for (int i = 0; i < arrayArgumentos.get(0).size() / 2; i++) {
                     arrAux[i] = arrayArgumentos.get(0).get(i);
                 }
+                arrAux[arrayArgumentos.get(0).size() / 2] = res;
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(0) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(0), arrayClaseAgentes.get(0), arrAux);
@@ -121,11 +123,12 @@ public class AgenteMonitor extends Agent {
                 System.out.println("ARGS: " + arrayNombreAgentes.get(5) + "; " + arrayClaseAgentes.get(2) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(5), arrayClaseAgentes.get(2), arrAux);
 
-                arrAux = new Object[arrayArgumentos.get(0).size() / 2];
+                arrAux = new Object[(arrayArgumentos.get(0).size() / 2)+1];
                 c = 0;
                 for (int i = arrayArgumentos.get(0).size() / 2; i < arrayArgumentos.get(0).size(); i++) {
                     arrAux[c++] = arrayArgumentos.get(0).get(i);
                 }
+                arrAux[arrayArgumentos.get(0).size() / 2] = res;
                 myGui2.presentarSalida("\nCreando agente Cliente...");
                 System.out.println("ARGS: " + arrayNombreAgentes.get(3) + "; " + arrayClaseAgentes.get(0) + " " + arrAux);
                 MicroRuntime.startAgent(arrayNombreAgentes.get(3), arrayClaseAgentes.get(0), arrAux);
@@ -244,6 +247,15 @@ public class AgenteMonitor extends Agent {
                     }
                     myGui2.presentarSalida("\n");
                 }
+                
+                arrayNombreClientes=new ArrayList<>();
+                for(int i=0;i<arrayNombreAgentes.size();i++){
+                    if(arrayNombreAgentes.get(i).contains("Cliente")){
+                        arrayNombreClientes.add(arrayNombreAgentes.get(i));
+                    }
+                }
+                System.out.println("TAM: "+arrayNombreClientes.size());
+                res.generarArrayNombres(arrayNombreClientes);
             } catch (IOException ex) {
                 System.err.println("Error al leer el fichero de configuración: " + ex.getMessage());
                 throw new Exception();
