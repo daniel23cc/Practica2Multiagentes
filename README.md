@@ -282,15 +282,70 @@ Clase encargada de almacenar los datos del resultado de la ejecución del Restau
 
 ### Diseño de los Agentes
 
+  
+
 #### Agente Cliente
 
-- **TareaSolicitarServicioIniciador**
+  
 
-	Esta tarea corresponde al Agente Cliente para resolver el rol iniciador del protocolo **FIPA-Contract-		Net** y para ello debemos personalizar la clase `ContractNetInitiator`
+-  **TareaSolicitarServicioIniciador**
 
-	Esta tarea se compondrá de las siguientes partes:
-	-  
-	```
+  
 
-	```
+Esta tarea corresponde al Agente Cliente para resolver el rol iniciador del protocolo **FIPA-Contract- Net** y para ello debemos personalizar la clase `ContractNetInitiator`
+
+  
+
+Esta tarea se compondrá de las siguientes partes:
+
+- **La parte de inicialización para crear el mensaje y lanzar el protocolo Contract Net**
+
+```
+iniciarServicio(ACLMessage cfp){
+	msg=ACLMessage(ACLMessage.CFP)
+	msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+	msg.setSender(getAID());
+	for(Restaurante rest: listaRestaurantes){
+		AID agenteDestinatario = new AID(rest, AID.ISLOCALNAME)
+		mensajeCFP.addReceiver(agenteDestinatario);
+	}
+	mensajeCFP.setPerformative(ACLMessage.CFP)
+	mensajeCFP.setContent(servicios[PRIMERO])
+}
+```
+- **Respuestas a la solicitud de entrada del Cliente por parte del Restaurante:** Hay que tener en cuenta que solo aceptaremos aquellas respuestas de tipo  PROPOSE.
+Varios restaurantes podrán tener espacio, aquí entraría la posibilidad de usar el vector "acceptances" para rechazar la propuesta para todos ellos y finalmente, elegir a un restaurante en concreto siguiendo un criterio de ponderación (por ejemplo, aquel con menor capacidad). Sin embargo, en un principio se va a optar por un criterio más simple, una cola FIFO en función del registro en las páginas amarillas del restaurante
+```
+handleAllResponses(responses, acceptances){
+	ACLMessage msg
+	heEntrado=false
+	Iterator it=responses.iterator()
+	while(it.hasNext()){
+		msg=it.next()
+		if(msg.getPerformative() == ACLMEssage.PROPOSE){
+			//Cliente comprueba si dispone de dinero suficiente para ese servicio
+			if(dineroSuficiente()){
+				ACLMessage reply=msg.createReply()
+				reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+				if(!heEntrado){				
+					reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					heEntrado=true
+				}
+			}
+		}
+	}
+}
+```
+- **Respuestas del Restaurante del cocinado del servicio que le fue otorgado de parte del Cliente**: 
+```
+handleInform(ACLMessage inform){
+	if (inform.getPerformative() == ACLMessage.INFORM_DONE) {
+		servicios.remove(PRIMERO)
+	}else if (inform.getPerformative() == ACLMessage.INFORM_REF) {
+		//La cocina falló
+	}else{
+		//gestion del fallo
+	}
+}
+```
 
