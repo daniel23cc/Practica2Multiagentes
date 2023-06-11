@@ -21,13 +21,18 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.DFSubscriber;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.proto.ProposeResponder;
 import jade.util.leap.Iterator;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -120,13 +125,17 @@ public class AgenteCocina extends Agent {
         ServiceDescription templateSd2 = new ServiceDescription();
         templateSd2.setType(TIPO_SERVICIO);
         templateSd2.setName(RESTAURANTE.name());
-        template2.addServices(templateSd);
+        template2.addServices(templateSd2);
 
         // Se añaden las tareas principales
+        // long delay = 5000; // Retraso de 5 segundos
+        //addBehaviour(new MiWakerBehaviour(this, delay));
         addBehaviour(new TareaSuscripcionDF(this, template2));
-        addBehaviour(new TareaEntradaComandas(this));
+        MessageTemplate mt = MessageTemplate.and(
+                MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_PROPOSE),
+                MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
+        addBehaviour(new TareaEntradaComandas(this, mt));
 
-        //addBehaviour(new AgenteCocina.Tarea(this));
     }
 
     @Override
@@ -164,6 +173,8 @@ public class AgenteCocina extends Agent {
 
             myGui.presentarSalida("El agente: " + myAgent.getName()
                     + "ha encontrado a:\n\t" + dfad.getName());
+//            System.out.println("El agente: " + myAgent.getName()
+//                    + "ha encontrado a:\n\t" + dfad.getName());
         }
 
         @Override
@@ -172,6 +183,9 @@ public class AgenteCocina extends Agent {
 
             for (Constantes.NombreServicio servicio : CATEGORIAS) {
                 if (listaAgentes[servicio.ordinal()].remove(agente)) {
+//                    System.out.println("El agente: " + agente.getName()
+//                            + " ha sido eliminado de la lista de "
+//                            + myAgent.getName());
                     myGui.presentarSalida("El agente: " + agente.getName()
                             + " ha sido eliminado de la lista de "
                             + myAgent.getName());
@@ -180,61 +194,115 @@ public class AgenteCocina extends Agent {
         }
     }
 
-    public class TareaEntradaComandas extends CyclicBehaviour {
+    public class TareaEntradaComandas extends ProposeResponder {
 
-        public TareaEntradaComandas(AgenteCocina aThis) {
-            super(aThis);
+        public TareaEntradaComandas(Agent a, MessageTemplate mt) {
+            super(a, mt);
         }
 
         @Override
-        public void action() {
+        protected ACLMessage prepareResponse(ACLMessage propose) throws NotUnderstoodException, RefuseException {
 
-            MessageTemplate plantilla = MessageTemplate.and(
-                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
-            ACLMessage mensaje = myAgent.receive(plantilla);
+            ACLMessage respuesta = propose.createReply();
 
-            if (mensaje != null) {
-                String[] contenido = mensaje.getContent().split(",");
-                myGui.presentarSalida("<-- Recibida una solicitud de cocinar: " + contenido[0]);
-                //Compruebo de que tipo es el plato(entrante,principal o postre)
-                String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
+            String[] contenido = propose.getContent().split(",");
+            myGui.presentarSalida("<-- Recibida una solicitud de cocinar: " + contenido[0]);
+            //Compruebo de que tipo es el plato(entrante,principal o postre)
+            String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
 
-                int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
-                if (comandasDisp > 0) {//si todavia la cocina tiene capacidad de cocinar ese tipo de plato lo hace, sino dice al restaurante que no puede
+            int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
+            if (comandasDisp > 0) {//si todavia la cocina tiene capacidad de cocinar ese tipo de plato lo hace, sino dice al restaurante que no puede
 
-                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
-                    respuestaCocina.addReceiver(mensaje.getSender());
-                    respuestaCocina.setContent("ENVIADO," + contenido[0]);
-                    comandasDisp--;
-                    comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
+                respuesta.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                respuesta.setContent(contenido[0]);
+                comandasDisp--;
+                comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
 
-                    myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
-                    try {
-                        int tiempoPreparacion = aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
-                        myGui.presentarSalida("((Necesito " + tiempoPreparacion + " milisegundos))");
-                        Thread.sleep(tiempoPreparacion);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    myGui.presentarSalida("Cocina YA HA cocinado el plato: " + contenido[0]);
-                    myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: " + tipoComanda);
-                    myGui.presentarSalida("--> Enviando el plato al restaurante");
-
-                    //aumento la caja de lo que genera la cocina
-                    resultado.agregarDineroGenerado(PLATOS[Plato.valueOf(contenido[0]).ordinal()].getPrecio());
-                    myGui.presentarSalida("La caja va por: " + resultado.getCajaTotal() + "\n");
-
-                    send(respuestaCocina);
-                }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
-                else {
-                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
-                    respuestaCocina.addReceiver(mensaje.getSender());
-                    respuestaCocina.setContent("SORRY," + contenido[0]);
-                    send(respuestaCocina);
+                myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
+                try {
+                    int tiempoPreparacion = aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
+                    myGui.presentarSalida("((Necesito " + tiempoPreparacion + " milisegundos))");
+                    Thread.sleep(tiempoPreparacion);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                myGui.presentarSalida("Cocina YA HA cocinado el plato: " + contenido[0]);
+                myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: " + tipoComanda);
+                myGui.presentarSalida("--> Enviando el plato al restaurante");
+
+                //aumento la caja de lo que genera la cocina
+                resultado.agregarDineroGenerado(PLATOS[Plato.valueOf(contenido[0]).ordinal()].getPrecio());
+                myGui.presentarSalida("La caja va por: " + resultado.getCajaTotal() + "\n");
+
+            }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
+            else {
+                //ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
+                // respuestaCocina.addReceiver(mensaje.getSender());
+                respuesta.setPerformative(ACLMessage.REJECT_PROPOSAL);
+                respuesta.setContent(contenido[0]);
+
             }
 
+            return respuesta;
         }
+
     }
+
+//    public class TareaEntradaComandas extends CyclicBehaviour {
+//
+//        public TareaEntradaComandas(AgenteCocina aThis) {
+//            super(aThis);
+//        }
+//
+//        @Override
+//        public void action() {
+//
+//            MessageTemplate plantilla = MessageTemplate.and(
+//                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+//                    MessageTemplate.not(MessageTemplate.MatchSender(agenteDF)));
+//            ACLMessage mensaje = myAgent.receive(plantilla);
+//
+//            if (mensaje != null) {
+//                String[] contenido = mensaje.getContent().split(",");
+//                myGui.presentarSalida("<-- Recibida una solicitud de cocinar: " + contenido[0]);
+//                //Compruebo de que tipo es el plato(entrante,principal o postre)
+//                String tipoComanda = Plato.valueOf(contenido[0]).getOrdenComanda().name();
+//
+//                int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
+//                if (comandasDisp > 0) {//si todavia la cocina tiene capacidad de cocinar ese tipo de plato lo hace, sino dice al restaurante que no puede
+//
+//                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
+//                    respuestaCocina.addReceiver(mensaje.getSender());
+//                    respuestaCocina.setContent("ENVIADO," + contenido[0]);
+//                    comandasDisp--;
+//                    comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
+//
+//                    myGui.presentarSalida("Cocina cocinando el plato: " + contenido[0] + "...");
+//                    try {
+//                        int tiempoPreparacion = aleatorio.nextInt(MAX_TIEMPO_COCINADO - MIN_TIEMPO_COCINADO) + MIN_TIEMPO_COCINADO;
+//                        myGui.presentarSalida("((Necesito " + tiempoPreparacion + " milisegundos))");
+//                        Thread.sleep(tiempoPreparacion);
+//                    } catch (InterruptedException ex) {
+//                        Logger.getLogger(AgenteCocina.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                    myGui.presentarSalida("Cocina YA HA cocinado el plato: " + contenido[0]);
+//                    myGui.presentarSalida("Aun puedo preparar: " + comandasDisp + " más del tipo: " + tipoComanda);
+//                    myGui.presentarSalida("--> Enviando el plato al restaurante");
+//
+//                    //aumento la caja de lo que genera la cocina
+//                    resultado.agregarDineroGenerado(PLATOS[Plato.valueOf(contenido[0]).ordinal()].getPrecio());
+//                    myGui.presentarSalida("La caja va por: " + resultado.getCajaTotal() + "\n");
+//
+//                    send(respuestaCocina);
+//                }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
+//                else {
+//                    ACLMessage respuestaCocina = new ACLMessage(ACLMessage.INFORM);
+//                    respuestaCocina.addReceiver(mensaje.getSender());
+//                    respuestaCocina.setContent("SORRY," + contenido[0]);
+//                    send(respuestaCocina);
+//                }
+//            }
+//
+//        }
+//    }
 }

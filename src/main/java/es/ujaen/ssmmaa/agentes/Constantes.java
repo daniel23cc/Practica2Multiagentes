@@ -28,11 +28,12 @@ public class Constantes {
     public static final int PRIMERO = 0;
     public static final int MIN_TIEMPO_COCINADO = 4000;
     public static final int MAX_TIEMPO_COCINADO = 7000;
-    public static final int MIN_TIEMPO_PEDIR_PLATOS=10000;
-    public static final int MAX_TIEMPO_PEDIR_PLATOS=16000;
-    public static final int MAXIMOS_INTENTOS_COMER=3;
-    public static final int D100=101;
+    public static final int MIN_TIEMPO_PEDIR_PLATOS = 2000;
+    public static final int MAX_TIEMPO_PEDIR_PLATOS = 6000;
+    public static final int MAXIMOS_INTENTOS_COMER = 3;
+    public static final int D100 = 101;
     public static final String ARCHIVO_GUARDADO = "resultado.txt";
+    private static final double FACTOR_INCREMENTO = 0.3; // Este valor determina cuánto aumenta el precio por cada servicio
 
     public enum NombreServicio { //hijo
         CLIENTE, RESTAURANTE, COCINA, MONITOR
@@ -41,7 +42,7 @@ public class Constantes {
     public static final NombreServicio[] CATEGORIAS = NombreServicio.values();
 
     public enum Plato {
-        
+
         //carta de platos disponibles para pedir
         Aceitunas(ENTRANTE, 2.50),
         Nachos_especiales(ENTRANTE, 3.99),
@@ -49,22 +50,17 @@ public class Constantes {
         Solomillo_a_la_pimienta(PRINCIPAL, 8.65),
         Tarta_de_queso(POSTRE, 5.19),
         Helado_frambuesa(POSTRE, 1.99),
-        Carne_salsa_PEDROJimenez(PRINCIPAL,6.86),
-        Rosquillas_CCanada(POSTRE,2.49),
-        Solomillo_JFRuiz(PRINCIPAL,5.99),
-        Lubina_daltonica(PRINCIPAL,3.95),
-        Pastelon_magarcia(POSTRE,4.95),
-        Palomitas_abarca(ENTRANTE,1.54);
+        Carne_salsa_PEDROJimenez(PRINCIPAL, 6.86),
+        Rosquillas_CCanada(POSTRE, 2.49),
+        Solomillo_JFRuiz(PRINCIPAL, 5.99),
+        Lubina_daltonica(PRINCIPAL, 3.95),
+        Pastelon_magarcia(POSTRE, 4.95),
+        Palomitas_abarca(ENTRANTE, 1.54);
 
         
-        @Override
-        public String toString() {
-            return name() + ","+ ordenComanda +","+ precio;
-        }
-
         private OrdenComanda ordenComanda;
         private double precio;
-        
+
         private AID AIDcliente;
 
         private Plato(OrdenComanda ordenComanda, double precio) {
@@ -83,7 +79,7 @@ public class Constantes {
         public String getNombre() {
             return name();
         }
-        
+
         public AID getAIDcliente() {
             return AIDcliente;
         }
@@ -91,8 +87,15 @@ public class Constantes {
         public void setAIDcliente(AID AIDcliente) {
             this.AIDcliente = AIDcliente;
         }
+
+        public double calcularPrecio(int numeroServicios) {
+            return precio + (FACTOR_INCREMENTO * numeroServicios);
+        }
         
-        
+        @Override
+        public String toString() {
+            return name() + "," + ordenComanda + "," + precio;
+        }
 
 
 //        public static Plato pedirPlato() {//Obtengo un plato aleatorio
