@@ -83,7 +83,8 @@ public class AgenteCocinaJFrame extends javax.swing.JFrame {
         myAgent.doDelete();
     }//GEN-LAST:event_finalizarActionPerformed
     public void presentarSalida(String msg) {
-        salidaTexto.append(msg+"\n");
+        salidaTexto.append(msg + "\n");
+        System.out.println(msg);
     }
 
 
