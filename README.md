@@ -450,64 +450,6 @@ end
 ## Diseño
 
   
-
-### Datos
-
-Tipos de datos necesarios para la solución de la práctica:
-
-  
-
-#### Agente Cliente
-
-Variables locales:
-
--  `resultado: Resultado`
-
--  `listaAgentes: ArrayList<AID>[]`
-
--  `restAenviar: entero`
-
--  `dineroDisponible: flotante`
-
--  `contRest: entero`
-
-  
-
-#### Agente Restaurante
-
--  `platosPedidos: ArrayList<Plato>`
-
--  `resultado: Resultado`
-
--  `platosPedidos: ArrayList<Plato>`
--  `platosCocinados: ArrayList<Plato>`
-- `platosAEntregar: ArrayList<Plato>`
-
--  `capacidadComensales: entero`
--   `capacidadServivios: entero`
-
--  `numComensales: entero`
-
--  `numServicios: entero`
-
--  `listaAgentes: ArrayList<AID>[]`
-
--  `contCocinas: entero`
-
-  
-
-#### Agente Cocina
-
--  `capacidadPlatos: entero`
-
--  `resultado: Resultado`
-
--  `tiposOrdenComanda: Set<OrdenComanda>`
-
--  `comandasDisponiblesPorOrdenComanda: Map<String, Integer>`
-
--  `listaAgentes: ArrayList<AID>[]`
-
   
 
 ### Clases de apoyo
@@ -527,27 +469,30 @@ Esta tarea se compondrá de las siguientes partes:
 -  **La parte de inicialización para crear el mensaje y lanzar el protocolo Contract Net**
 
 ```
+función iniciarServicio():
+    mensaje = crearMensajeCFP()
+    agregarReceptores(mensaje)
+    enviarCFP(mensaje)
+finfuncion
 
-iniciarServicio(Agent agente,ACLMessage cfp){
+función crearMensajeCFP():
+    mensaje = nuevo Mensaje(CFP)
+    mensaje.establecerProtocolo(FIPA_CONTRACT_NET)
+    mensaje.establecerRemitente(obtenerAID())
+    mensaje.establecerPerformativa(CFP)
+    mensaje.establecerContenido(servicios[PRIMERO])
+    retornar mensaje
+finfuncion
 
-	msg=ACLMessage(ACLMessage.CFP)
+función agregarReceptores(mensaje):
+    para cada restaurante en listaRestaurantes:
+        agenteDestinatario = nuevo AID(restaurante)
+        mensaje.agregarDestinatario(agenteDestinatario)
+	finpara
+finfuncion
 
-	msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-
-	msg.setSender(getAID());
-
-	for(Restaurante rest: listaRestaurantes){
-
-		AID agenteDestinatario = new AID(rest, AID.ISLOCALNAME)
-
-		mensajeCFP.addReceiver(agenteDestinatario);
-	}
-
-	mensajeCFP.setPerformative(ACLMessage.CFP)
-
-	mensajeCFP.setContent(servicios[PRIMERO])
-
-}
+función enviarCFP(mensaje):
+    enviar mensaje a los agentes destinatarios
 
 ```
 
@@ -556,41 +501,40 @@ iniciarServicio(Agent agente,ACLMessage cfp){
 	Varios restaurantes podrán tener espacio, aquí entraría la posibilidad de usar el vector "acceptances" para rechazar la propuesta para todos ellos y finalmente, elegir a un restaurante en concreto siguiendo un criterio de ponderación (por ejemplo, aquel con menor capacidad). Sin embargo, en un principio se va a optar por un criterio más simple, una cola FIFO en función del registro en las páginas amarillas del restaurante
 
 ```
-handlePropose(propose, acceptances){
-ACLMessage msg
-	Iterator it=responses.iterator()
-	while(it.hasNext()){
-		msg=it.next()
-		if(msg.getPerformative() == ACLMEssage.PROPOSE){
-			//Cliente comprueba si dispone de dinero suficiente para ese servicio
-			if(dineroSuficiente()){
-				ACLMessage reply=msg.createReply()
-				reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
-				if(!heEntrado){
-					reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-					heEntrado=true
-				}
-			}
-		}
-	}
-}
+función recibirRespuestaNegociacionCFP(propose, acceptances):
+    para cada mensaje en responses:
+        si mensaje.obtenerPerformativa() == PROPOSE:
+            // Cliente comprueba si dispone de dinero suficiente para ese servicio
+            si dineroSuficiente():
+                respuesta = mensaje.crearRespuesta()
+                si !heEntrado:
+                    respuesta.setPerformativa(ACLMessage.ACCEPT_PROPOSAL)
+                    heEntrado = true
+                sino:
+                    respuesta.setPerformativa(ACLMessage.REJECT_PROPOSAL)
+				finsi
+			finsi
+		finsi
+	finpara
+finfuncion
+
 ```
 
 -  **Respuestas del Restaurante del cocinado del servicio que le fue otorgado de parte del Cliente**:
 Las respuestas pueden ser satisfactorias o no satisfactorias
 ```
-handleInform(ACLMessage inform){
-	for (int i = 0; i < platos; i++) {
-		comer()
-		esperarTiempoComer()
-		servicios.remove(PRIMERO)
-		numPlatosRestantes--
-	}
-}
+función recibirInform(inform):
+    desde 0 hasta numplatos:
+        comer()
+        esperarTiempoComer()
+        servicios.eliminar(PRIMERO)
+        numPlatosRestantes--
+	finpara
+finfuncion
 ```
 
 ```
-handleFailure(ACLMessage failure) {
+funcion recibirFalloInform(ACLMessage failure) {
 	//Algo ha fallado, probamos con otro restaurante
 	contRest++;
 }
@@ -607,80 +551,72 @@ Esta tarea se compondrá de las siguientes partes:
 -  **La parte de respuesta a la propuesta de negociación cfp**
 
 ```
-handleCfp(ACLMessage cfp){
-	ACLMessage propose = cfp.createReply();
-	if(lleno){
-		propose.setPerformative(ACLMessage.PROPOSE);
-		//El contenido del mensaje es trivial, al final el cliente solo precisa conocer si el Restaurante acepta o deniega su propuesta de negociacion
-		propose.setContent(generarMensaje());
-	}else{
-		propose.setPerformative(ACLMessage.REFUSE);
-		propose.setContent(generarMensaje());
-	}
-	return propose;
-}
+función handleCfp(negociacionCFP):
+    propose = negociacionCFP.crearRespuesta()
+    si lleno:
+        propose.establecerPerformativa(PROPOSE)
+        // El contenido del mensaje es trivial, el cliente solo necesita saber si el Restaurante acepta o deniega la propuesta de negociación
+        propose.establecerContenido(generarMensaje())
+    sino:
+        propose.establecerPerformativa(ACLMessage.REFUSE)
+        propose.establecerContenido(generarMensaje())
+    retornar propose
+finfuncion
 
 ```
 -  **La parte de respuesta a la aceptación de la propuesta**
 En esta parte, se recogen todos los platos que el AgenteCliente quiere comer, a posteriori se envian 1 a 1 a la cocina. La elección de la cocina es un proceso que se detallará en la implementación
 ```
-handleAcceptProposal(ACLMessage cfp){
-	String[] platos=cfp.getContent()
-	 for (int i = 0; i < platos.length; i++) {
-	     Plato plato = PLATOS[Plato.valueOf(platos[i]).ordinal()];
-         plato.setAIDcliente(cfp.getSender());
-         platosPedidos.add(plato);
-         numPlatosServicio++;
-     }
-     ACLMEssage reply = accept.createReply();
-     for (int i = 0; i < numPlatosServicio; i++) {
-		  //inicio protocolo propose con la cocina
-	      if (!platosPedidos.isEmpty()) {
-	          ACLMessage msg = new ACLMessage(ACLMessage.PROPOSE);
-	          msg.setProtocol(FIPANames.InteractionProtocol.FIPA_PROPOSE);
-	          msg.setSender(getAID());
-	          msg.setContent(platosPedidos.remove(PRIMERO).toString());
-	          if (listaAgentes[COCINA.ordinal()].size() > 0) {
-	            msg.addReceiver(listaAgentes[COCINA.ordinal()].get(cocinaAenviar));
-	            //solicito a la cocina cocinar el plato
-	            addBehaviour(new TareaSolicitarCocinado(myAgent, msg));
-		      }
-		   }
-	  }
-   }
-}
+función funcionRecibirAcceptProposalContractNetCliente(accept):
+    platos = accept.getContenido()
+    para cada plato en platos:
+        plato.establecerAIDcliente(accept.getRemitente())
+        platosPedidos.agregar(plato)
+        numPlatosServicio++
+	finpara
 
+    reply = accept.crearRespuesta()
+    para i de 0 a numPlatosServicio:
+        si no platosPedidos.estaVacio():
+            msg = nuevo ACLMessage(PROPOSE)
+            msg.establecerProtocolo(FIPA_PROPOSE)
+            msg.establecerRemitente(obtenerAID())
+            msg.establecerContenido(platosPedidos.eliminar(PRIMERO))
+            si NO listaAgentes[COCINA].vacia:
+                msg.agregarDestinatario(listaAgentes[COCINA].get(cocinaAenviar))
+                solicitarPlatoCocina()
+			finsi
+		finsi
+	finpara
+finfuncion
 ```
 
 -  **Tarea de recibir los platos cocinados de la cocina**
 ```
-handleAcceptProposal(ACLMessage accept_proposal) {
-    platosCocinados.add(accept_proposal.plato);
-
-    platosAentregar.add(platosCocinados.remove(PRIMERO));
+función recibirAcceptProposalProposeCocina(accept_proposal):
+    platosCocinados.agregar(accept_proposal.plato)
+    platosAentregar.agregar(platosCocinados.eliminar(PRIMERO))
    
-    if (platosAentregar.size() == numPlatosServicio) {
-
+    si platosAentregar.size() == numPlatosServicio:
         // Crear estructura del mensaje
-        inform = createReply();
-        inform.setPerformative(ACLMessage.INFORM);
-        inform.setContent(platosAentregar.toString());
+        inform = accept_proposal.crearRespuesta()
+        inform.establecerPerformativa(INFORM)
+        inform.setContenido(platosAentregar)
         // Enviar el plato al cliente
-        inform.addReceiver(AIDcliente);
+        inform.agregarDestinatario(AIDcliente)
         // Incrementar contador de servicios
-        numServicios++;
+        numServicios++
         // Finalizar el comportamiento
-        numPlatosServicio = 0;
-        platosAentregar.clear();
-        numComensales--;
-        send(inform);
-    }
-
-}
+        numPlatosServicio = 0
+        platosAentregar.limpiar()
+        numComensales--
+        enviar(inform)
+	finsi
+finfuncion
 ```
 
 ```
-handleRejectProposal(ACLMessage reject_proposal) {
+función recibirRejectProposalProposeCocina(reject_proposal) {
     //Algo ha fallado, probamos con otra cocina
     contCocinas++;
 }
@@ -694,33 +630,26 @@ Esta tarea corresponde al Agente Cocina para resolver el rol participante del pr
 Esta tarea se compondrá de las siguientes partes:
 -  **La parte de respuesta a la propuesta de cocinado del Restaurante**
 ```
-prepareResponse(ACLMessage propose) {
-            respuesta = propose.createReply()
+función prepararRespuesta(propose):
+    respuesta = propose.crearRespuesta()
+    contenido = propose.getContenido()
 
-            String[] contenido = propose.getContent()
+    tipoComanda = contenido.getTipo()
 
-            //Compruebo de que tipo es el plato(entrante,principal o postre)
-            String tipoComanda = contenido.getTipo();
+    comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda)
+    si comandasDisp > 0:
+        respuesta.establecerPerformativa(ACLMessage.ACCEPT_PROPOSAL)
+        respuesta.establecerContenido(contenido[0])
+        comandasDisp--
+        comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp)
 
-            int comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda);
-            if (comandasDisp > 0) {//si todavia la cocina tiene capacidad de cocinar ese tipo de plato lo hace, sino dice al restaurante que no puede
+        esperar()
 
-                respuesta.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                respuesta.setContent(contenido[0]);
-                comandasDisp--;
-                comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp);
-
-                esperar()
-                
-                //aumento la caja de lo que genera la cocina
-                resultado.agregarDineroGenerado(contenido[0].getPrecio());
-
-            }// si no hay comandas disponibles, la cocina no puede atender mas platos de ese tipo
-            else {
-                respuesta.setPerformative(ACLMessage.REJECT_PROPOSAL);
-                respuesta.setContent(contenido[0]);
-            }
-            return respuesta;
-        }
-}
+        resultado.agregarDineroGenerado(contenido[0].getPrecio())
+    sino:
+        respuesta.setPerformativa(ACLMessage.REJECT_PROPOSAL)
+        respuesta.setContenido(contenido[0])
+    finsi
+    retornar respuesta
+finfuncion
 ```
