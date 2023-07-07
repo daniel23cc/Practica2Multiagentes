@@ -466,13 +466,15 @@ Clase encargada de almacenar los datos del resultado de la ejecución del Restau
 Esta tarea corresponde al Agente Cliente para resolver el rol iniciador del protocolo **FIPA-Contract- Net** y para ello debemos personalizar la clase `ContractNetInitiator`
 
 Esta tarea se compondrá de las siguientes partes:
--  **La parte de inicialización para crear el mensaje y lanzar el protocolo Contract Net**
+-  **La parte de inicialización para crear el mensaje y lanzar el protocolo Contract Net**: En esta parte se enviará la solicitud de negociación a un determinado cliente, tal y como se indica en el diagrama de secuencia, este mensaje contendrá el servicio que desea recibir el cliente. La elección del restaurante es una elección trivial que puede atender a diversos factores. En este caso se va a intentar optar por una prioridad según el orden FIFO en el cual se registraron los Restaurantes en las paginas amarillas
 
 ```
 función iniciarServicio():
-    mensaje = crearMensajeCFP()
-    agregarReceptores(mensaje)
-    enviarCFP(mensaje)
+	mientras quedenServicios
+		mensaje = crearMensajeCFP()
+		agregarReceptores(mensaje)
+		enviarCFP(mensaje)
+	finMientras
 finfuncion
 
 función crearMensajeCFP():
@@ -485,20 +487,20 @@ función crearMensajeCFP():
 finfuncion
 
 función agregarReceptores(mensaje):
-    para cada restaurante en listaRestaurantes:
-        agenteDestinatario = nuevo AID(restaurante)
+    si NO listaRestaurantes.vacia:
+        agenteDestinatario = elegirRestaurante()
         mensaje.agregarDestinatario(agenteDestinatario)
-	finpara
+	finsi
 finfuncion
 
 función enviarCFP(mensaje):
     enviar mensaje a los agentes destinatarios
-
+finfuncion
 ```
 
 -  **Respuestas a la solicitud de entrada del Cliente por parte del Restaurante:** Hay que tener en cuenta que solo aceptaremos aquellas respuestas de tipo PROPOSE.
+	Aquí se procesa en precio que ha propuesto el restaurante al cliente para cocinar el servicio. Este aceptará en caso de que el dinero disponile por parte del cliente sea igual o superior al importe requerido.
 	
-	Varios restaurantes podrán tener espacio, aquí entraría la posibilidad de usar el vector "acceptances" para rechazar la propuesta para todos ellos y finalmente, elegir a un restaurante en concreto siguiendo un criterio de ponderación (por ejemplo, aquel con menor capacidad). Sin embargo, en un principio se va a optar por un criterio más simple, una cola FIFO en función del registro en las páginas amarillas del restaurante
 
 ```
 función recibirRespuestaNegociacionCFP(propose, acceptances):
@@ -508,10 +510,10 @@ función recibirRespuestaNegociacionCFP(propose, acceptances):
             si dineroSuficiente():
                 respuesta = mensaje.crearRespuesta()
                 si !heEntrado:
-                    respuesta.setPerformativa(ACLMessage.ACCEPT_PROPOSAL)
+                    respuesta.setPerformativa(ACCEPT_PROPOSAL)
                     heEntrado = true
                 sino:
-                    respuesta.setPerformativa(ACLMessage.REJECT_PROPOSAL)
+                    respuesta.setPerformativa(REJECT_PROPOSAL)
 				finsi
 			finsi
 		finsi
@@ -521,7 +523,7 @@ finfuncion
 ```
 
 -  **Respuestas del Restaurante del cocinado del servicio que le fue otorgado de parte del Cliente**:
-Las respuestas pueden ser satisfactorias o no satisfactorias
+Esta es la parte final del protocolo Contract-Net, en esta parte el cliente recibiría el servicio entero que solicitó al restaurannte completamente cocinado. Esta tarea no finalizará hasta que consuma todos estos platos
 ```
 función recibirInform(inform):
     desde 0 hasta numplatos:
@@ -529,15 +531,16 @@ función recibirInform(inform):
         esperarTiempoComer()
         servicios.eliminar(PRIMERO)
         numPlatosRestantes--
-	finpara
+	findesde
 finfuncion
 ```
 
+Esta parte se ejecutará en caso de que el restaurante no consiga cocinar el servicio, en este caso el cliente probará suerte con otro REstaurante
 ```
-funcion recibirFalloInform(ACLMessage failure) {
+función recibirFalloInform(ACLMessage failure) :
 	//Algo ha fallado, probamos con otro restaurante
 	contRest++;
-}
+finfuncion
 ```
 
 
@@ -548,7 +551,7 @@ funcion recibirFalloInform(ACLMessage failure) {
 Esta tarea corresponde al Agente Restaurante para resolver el rol participante del protocolo **FIPA-Contract- Net** y para ello debemos personalizar la clase `ContractNetResponder`
 
 Esta tarea se compondrá de las siguientes partes:
--  **La parte de respuesta a la propuesta de negociación cfp**
+-  **La parte de respuesta a la propuesta de negociación cfp**: Esta parte gestiona la solicitud de negociación por parte del Cliene para cocinar un servicio. Antes de todo debe de comprobarse que el restaurante en cuestión albergue espacio suficiente. En caso de ser así ya podrá realizar el objetivo en cuestión
 
 ```
 función handleCfp(negociacionCFP):
@@ -565,7 +568,7 @@ finfuncion
 
 ```
 -  **La parte de respuesta a la aceptación de la propuesta**
-En esta parte, se recogen todos los platos que el AgenteCliente quiere comer, a posteriori se envian 1 a 1 a la cocina. La elección de la cocina es un proceso que se detallará en la implementación
+En esta parte, se recogen todos los platos que el AgenteCliente quiere comer, a posteriori se envian 1 a 1 a la cocina. La elección de la cocina es un proceso que se detallará en la implementación pero posiblemente quedará realegado en una prioridad en función del orden de registro en las páginas amarillas
 ```
 función funcionRecibirAcceptProposalContractNetCliente(accept):
     platos = accept.getContenido()
@@ -591,7 +594,7 @@ función funcionRecibirAcceptProposalContractNetCliente(accept):
 finfuncion
 ```
 
--  **Tarea de recibir los platos cocinados de la cocina**
+-  **Tarea de recibir los platos cocinados de la cocina**: En esta parte se gestiona el recibimiento de los platos cocinados por parte de la Cocina, cabe destacar que el servivcio no se entregará al cliente hasta que todos sus platos se hayan cocinado. Esto repercute en una dificultad adicional ya que ninguna tarea a excepción de la última no enviarán nada de vuelta al cliente
 ```
 función recibirAcceptProposalProposeCocina(accept_proposal):
     platosCocinados.agregar(accept_proposal.plato)
@@ -601,7 +604,7 @@ función recibirAcceptProposalProposeCocina(accept_proposal):
         // Crear estructura del mensaje
         inform = accept_proposal.crearRespuesta()
         inform.establecerPerformativa(INFORM)
-        inform.setContenido(platosAentregar)
+        inform.establecerContenido(platosAentregar)
         // Enviar el plato al cliente
         inform.agregarDestinatario(AIDcliente)
         // Incrementar contador de servicios
@@ -615,11 +618,12 @@ función recibirAcceptProposalProposeCocina(accept_proposal):
 finfuncion
 ```
 
+Esta parte gestionará los posibles problemas de cocinado por parte de la cocina, en caso de que una cocina no pueda cocinar un plato (por haber excedido la cantidad máxima permitida de cocinados por un tipo de orden de comanda específica) se solicitará este cocinado a la siguiente cocina según el orden de registro en las páginas amarillas
 ```
-función recibirRejectProposalProposeCocina(reject_proposal) {
+función recibirRejectProposalProposeCocina(reject_proposal):
     //Algo ha fallado, probamos con otra cocina
     contCocinas++;
-}
+finfuncion
 ```
 
 #### Agente Cocina
@@ -628,7 +632,7 @@ función recibirRejectProposalProposeCocina(reject_proposal) {
 Esta tarea corresponde al Agente Cocina para resolver el rol participante del protocolo **FIPA-Propose** y para ello debemos personalizar la clase `ProposeResponder`
 
 Esta tarea se compondrá de las siguientes partes:
--  **La parte de respuesta a la propuesta de cocinado del Restaurante**
+-  **La parte de respuesta a la propuesta de cocinado del Restaurante**: Esta tarea es la encargada de cocinar cada plato del servicio que le solicita el restaurante. CAbe volver a mencionar que solo cocinará el plato en caso de que aun tenga capacidad para cocinar platos de ese orden de comanda específico. Entre cada cocinado se esperará un tiempo para dar realismo
 ```
 función prepararRespuesta(propose):
     respuesta = propose.crearRespuesta()
@@ -638,7 +642,7 @@ función prepararRespuesta(propose):
 
     comandasDisp = comandasDisponiblesPorOrdenComanda.get(tipoComanda)
     si comandasDisp > 0:
-        respuesta.establecerPerformativa(ACLMessage.ACCEPT_PROPOSAL)
+        respuesta.establecerPerformativa(ACCEPT_PROPOSAL)
         respuesta.establecerContenido(contenido[0])
         comandasDisp--
         comandasDisponiblesPorOrdenComanda.put(contenido[1], comandasDisp)
@@ -647,7 +651,7 @@ función prepararRespuesta(propose):
 
         resultado.agregarDineroGenerado(contenido[0].getPrecio())
     sino:
-        respuesta.setPerformativa(ACLMessage.REJECT_PROPOSAL)
+        respuesta.setPerformativa(REJECT_PROPOSAL)
         respuesta.setContenido(contenido[0])
     finsi
     retornar respuesta
